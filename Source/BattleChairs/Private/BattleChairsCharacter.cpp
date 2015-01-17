@@ -1,16 +1,16 @@
-// Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 
 #include "BattleChairs.h"
 #include "BattleChairsCharacter.h"
 #include "BattleChairsProjectile.h"
 #include "Animation/AnimInstance.h"
-#include "GameFramework/InputSettings.h"
-#include "SVirtualJoystick.h"
 
-DEFINE_LOG_CATEGORY_STATIC(LogFPChar, Warning, All);
 
 //////////////////////////////////////////////////////////////////////////
 // ABattleChairsCharacter
+
+
+
 
 ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -21,6 +21,11 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	// set our turn rates for input
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
+
+	leftFire = false;
+	rightFire = false;
+	leftFireDelay = 30;
+	rightFireDelay = 30;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
@@ -54,12 +59,13 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	
-	//InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ABattleChairsCharacter::TouchStarted);
-	if( EnableTouchscreenMovement(InputComponent) == false )
-	{
-		InputComponent->BindAction("Fire", IE_Pressed, this, &ABattleChairsCharacter::OnFire);
-	}
-	
+	InputComponent->BindAction("Fire", IE_Pressed, this, &ABattleChairsCharacter::OnFire);
+	InputComponent->BindAction("SecondaryFire", IE_Pressed, this, &ABattleChairsCharacter::RightFire);
+	InputComponent->BindAction("Fire", IE_Released, this, &ABattleChairsCharacter::StopLeftFire);
+	InputComponent->BindAction("SecondaryFire", IE_Released, this, &ABattleChairsCharacter::StopRightFire);
+
+	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ABattleChairsCharacter::TouchStarted);
+
 	InputComponent->BindAxis("MoveForward", this, &ABattleChairsCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ABattleChairsCharacter::MoveRight);
 	
@@ -71,100 +77,116 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ABattleChairsCharacter::LookUpAtRate);
 }
-
 void ABattleChairsCharacter::OnFire()
-{ 
+{
+
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
 		const FRotator SpawnRotation = GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		FVector offSet = FVector(0.0f, -60.0f, 0.0f);
+		FRotator turn = FRotator(0.0);
+		turn.Add(0.0f, 3.0f, 0.0f);
 
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
+		UWorld* const World = GetWorld();
+		if (World != NULL)
+		{
+			// spawn the projectile at the muzzle
+			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+			//World->SpawnActor<AProjectileParent>(BulletClass, SpawnLocation, SpawnRotation);
+		}
+
+		ClientSetRotation(SpawnRotation - turn);
+		LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+		leftFire = true;
+	}
+	/*
+	// try and play the sound if specified
+	if (FireSound != NULL)
+	{
+	UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+	}
+	*/
+	/*
+	// try and play a firing animation if specified
+	if(FireAnimation != NULL)
+	{
+	// Get the animation object for the arms mesh
+	UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+	if(AnimInstance != NULL)
+	{
+	AnimInstance->Montage_Play(FireAnimation, 1.f);
+	}
+	}
+	*/
+}
+
+
+void ABattleChairsCharacter::RightFire()
+{
+
+	// try and fire a projectile
+	if (ProjectileClass != NULL)
+	{
+		const FRotator SpawnRotation = GetControlRotation();
+		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
+		FRotator turn = FRotator(0.0);
+		turn.Add(0.0f, -3.0f, 0.0f);
+
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
 		{
 			// spawn the projectile at the muzzle
 			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
 		}
-	}
 
+		ClientSetRotation(SpawnRotation - turn);
+		LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+		rightFire = true;
+	}
+	/*
 	// try and play the sound if specified
 	if (FireSound != NULL)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+	UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
 	}
-
+	*/
+	/*
 	// try and play a firing animation if specified
 	if(FireAnimation != NULL)
 	{
-		// Get the animation object for the arms mesh
-		UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-		if(AnimInstance != NULL)
-		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
-		}
+	// Get the animation object for the arms mesh
+	UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
+	if(AnimInstance != NULL)
+	{
+	AnimInstance->Montage_Play(FireAnimation, 1.f);
 	}
-
+	}
+	*/
 }
 
-void ABattleChairsCharacter::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
+
+void ABattleChairsCharacter::StopLeftFire()
 {
-	if( TouchItem.bIsPressed == true )
-	{
-		return;
-	}
-	TouchItem.bIsPressed = true;
-	TouchItem.FingerIndex = FingerIndex;
-	TouchItem.Location = Location;
-	TouchItem.bMoved = false;
+	leftFire = false;
+	leftFireDelay = 30;
 }
 
-void ABattleChairsCharacter::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
+void ABattleChairsCharacter::StopRightFire()
 {
-	if (TouchItem.bIsPressed == false)
-	{
-		return;
-	}
-	if( ( FingerIndex == TouchItem.FingerIndex ) && (TouchItem.bMoved == false) )
+	rightFire = false;
+	rightFireDelay = 30;
+}
+void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
+{
+	// only fire for first finger down
+	if (FingerIndex == 0)
 	{
 		OnFire();
-	}
-	TouchItem.bIsPressed = false;
-}
-
-void ABattleChairsCharacter::TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location)
-{
-	if ((TouchItem.bIsPressed == true) && ( TouchItem.FingerIndex==FingerIndex))
-	{
-		if (TouchItem.bIsPressed)
-		{
-			if (GetWorld() != nullptr)
-			{
-				UGameViewportClient* ViewportClient = GetWorld()->GetGameViewport();
-				if (ViewportClient != nullptr)
-				{
-					FVector MoveDelta = Location - TouchItem.Location;
-					FVector2D ScreenSize;
-					ViewportClient->GetViewportSize(ScreenSize);
-					FVector2D ScaledDelta = FVector2D( MoveDelta.X, MoveDelta.Y) / ScreenSize;									
-					if (ScaledDelta.X != 0.0f)
-					{
-						TouchItem.bMoved = true;
-						float Value = ScaledDelta.X * BaseTurnRate;
-						AddControllerYawInput(Value);
-					}
-					if (ScaledDelta.Y != 0.0f)
-					{
-						TouchItem.bMoved = true;
-						float Value = ScaledDelta.Y* BaseTurnRate;
-						AddControllerPitchInput(Value);
-					}
-					TouchItem.Location = Location;
-				}
-				TouchItem.Location = Location;
-			}
-		}
 	}
 }
 
@@ -198,15 +220,21 @@ void ABattleChairsCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-bool ABattleChairsCharacter::EnableTouchscreenMovement(class UInputComponent* InputComponent)
-{
-	bool bResult = false;
-	if(FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch )
-	{
-		bResult = true;
-		InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ABattleChairsCharacter::BeginTouch);
-		InputComponent->BindTouch(EInputEvent::IE_Released, this, &ABattleChairsCharacter::EndTouch);
-		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ABattleChairsCharacter::TouchUpdate);
+void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
+	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+	if (leftFire) {
+		leftFireDelay--;
+		if (leftFireDelay <= 0) {
+			OnFire();
+			leftFireDelay = 30;
+		}
 	}
-	return bResult;
+	if (rightFire) {
+		rightFireDelay--;
+		if (rightFireDelay <= 0) {
+			RightFire();
+			rightFireDelay = 30;
+		}
+	}
+
 }

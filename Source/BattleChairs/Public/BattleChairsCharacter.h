@@ -1,9 +1,7 @@
-// Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "GameFramework/Character.h"
 #include "BattleChairsCharacter.generated.h"
-
-class UInputComponent;
 
 UCLASS(config=Game)
 class ABattleChairsCharacter : public ACharacter
@@ -18,6 +16,12 @@ class ABattleChairsCharacter : public ACharacter
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FirstPersonCameraComponent;
 public:
+	//Public Variables
+	bool rightFire;
+	bool leftFire;
+	int rightFireDelay;
+	int leftFireDelay;
+
 	ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer);
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -45,9 +49,21 @@ public:
 	class UAnimMontage* FireAnimation;
 
 protected:
-	
+
+	/** Handler for a touch input beginning. */
+	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
+
 	/** Fires a projectile. */
 	void OnFire();
+
+	/** Fires a projectile. */
+	void RightFire();
+
+	/** Fires a projectile. */
+	void StopRightFire();
+
+	/** Fires a projectile. */
+	void StopLeftFire();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -67,37 +83,17 @@ protected:
 	 */
 	void LookUpAtRate(float Rate);
 
-	struct TouchData
-	{
-		TouchData() { bIsPressed = false;Location=FVector::ZeroVector;}
-		bool bIsPressed;
-		ETouchIndex::Type FingerIndex;
-		FVector Location;
-		bool bMoved;
-	};
-	void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
-	void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
-	void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
-	TouchData	TouchItem;
-	
+	void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction);
+
 protected:
 	// APawn interface
-	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
-
-	/* 
-	 * Configures input for touchscreen devices if there is a valid touch interface for doing so 
-	 *
-	 * @param	InputComponent	The input component pointer to bind controls to
-	 * @returns true if touch controls were enabled.
-	 */
-	bool EnableTouchscreenMovement(UInputComponent* InputComponent);
 
 public:
 	/** Returns Mesh1P subobject **/
 	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
-
 };
 

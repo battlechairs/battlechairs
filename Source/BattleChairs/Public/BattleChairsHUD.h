@@ -1,4 +1,4 @@
-// Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 #pragma once 
 #include "GameFramework/HUD.h"
 #include "BattleChairsHUD.generated.h"
@@ -17,6 +17,9 @@ public:
 private:
 	/** Crosshair asset pointer */
 	class UTexture2D* CrosshairTex;
+
+	/** Crosshair asset pointer */
+	class UTexture2D* HealthTex;
 
 };
 
