@@ -1,15 +1,18 @@
-// Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
-#pragma once
-#include "GameFramework/Actor.h"
-#include "BattleChairsProjectile.generated.h"
+// Fill out your copyright notice in the Description page of Project Settings.
 
-UCLASS(config=Game)
-class ABattleChairsProjectile : public AActor
+#pragma once
+
+#include "GameFramework/Actor.h"
+#include "ProjectileParent.generated.h"
+
+UCLASS(config = Game)
+class AProjectileParent : public AActor
 {
 	GENERATED_BODY()
+	
 
-	/** Sphere collision component */
-	UPROPERTY(VisibleDefaultsOnly, Category=Projectile)
+		/** Sphere collision component */
+		UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
 	class USphereComponent* CollisionComp;
 
 	/** Projectile movement component */
@@ -17,15 +20,19 @@ class ABattleChairsProjectile : public AActor
 	class UProjectileMovementComponent* ProjectileMovement;
 
 public:
-	ABattleChairsProjectile(const FObjectInitializer& ObjectInitializer);
+	AProjectileParent(const FObjectInitializer& ObjectInitializer);
 
 	/** called when projectile hits something */
 	UFUNCTION()
-	void OnHit(AActor* OtherActor, UPrimitiveComponent* HitComponent, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+		void OnHit(AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
 	/** Returns CollisionComp subobject **/
 	FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
 	/** Returns ProjectileMovement subobject **/
 	FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+	
+	
 };
+
+
 
