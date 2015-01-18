@@ -34,6 +34,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class AMyProject2Projectile> ProjectileClass;
 
+	/** Projectile class to spawn */
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+	TSubclassOf<class AProjectileParent> BulletClass;
+
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
 	class USoundBase* FireSound;
@@ -51,10 +55,16 @@ protected:
 	void OnFire();
 
 	/** Fires a projectile. */
+	void FireAgain();
+
+	/** Fires a projectile. */
 	void RightFire();
 
 	/** Fires a projectile. */
-	void StopFire();
+	void StopRightFire();
+
+	/** Fires a projectile. */
+	void StopLeftFire();
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
@@ -73,6 +83,8 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	void AMyProject2Character::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction);
 
 protected:
 	// APawn interface

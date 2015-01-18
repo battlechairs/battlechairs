@@ -3,13 +3,17 @@
 #include "MyProject2.h"
 #include "MyProject2Character.h"
 #include "MyProject2Projectile.h"
+#include "ProjectileParent.h"
 #include "Animation/AnimInstance.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 // AMyProject2Character
 bool alternateFire;
-bool firing;
+bool rightFire;
+bool leftFire;
+int rightFireDelay;
+int leftFireDelay;
 
 AMyProject2Character::AMyProject2Character(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -21,7 +25,10 @@ AMyProject2Character::AMyProject2Character(const FObjectInitializer& ObjectIniti
 	BaseTurnRate = 45.f;
 	BaseLookUpRate = 45.f;
 	alternateFire = false;
-	firing = false;
+	leftFire = false;
+	rightFire = false;
+	leftFireDelay = 30;
+	rightFireDelay = 30;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
@@ -57,7 +64,8 @@ void AMyProject2Character::SetupPlayerInputComponent(class UInputComponent* Inpu
 	
 	InputComponent->BindAction("Fire", IE_Pressed, this, &AMyProject2Character::OnFire);
 	InputComponent->BindAction("SecondaryFire", IE_Pressed, this, &AMyProject2Character::RightFire);
-	InputComponent->BindAction("StopFire", IE_Released, this, &AMyProject2Character::StopFire);
+	InputComponent->BindAction("Fire", IE_Released, this, &AMyProject2Character::StopLeftFire);
+	InputComponent->BindAction("SecondaryFire", IE_Released, this, &AMyProject2Character::StopRightFire);
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMyProject2Character::TouchStarted);
 
 	InputComponent->BindAxis("MoveForward", this, &AMyProject2Character::MoveForward);
@@ -85,17 +93,17 @@ void AMyProject2Character::OnFire()
 			turn.Add(0.0f, 3.0f, 0.0f);
 
 			const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
-			alternateFire = !alternateFire;
 			UWorld* const World = GetWorld();
 			if (World != NULL)
 			{
 				// spawn the projectile at the muzzle
 				World->SpawnActor<AMyProject2Projectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+				//World->SpawnActor<AProjectileParent>(BulletClass, SpawnLocation, SpawnRotation);
 			}			
 			
 		    ClientSetRotation(SpawnRotation - turn);
 			LaunchPawn(-1000*GetActorForwardVector(), false, false);
-			firing = true;			
+			leftFire = true;			
 	}
 	/*
 	// try and play the sound if specified
@@ -141,7 +149,7 @@ void AMyProject2Character::RightFire()
 
 		ClientSetRotation(SpawnRotation - turn);
 		LaunchPawn(-1000 * GetActorForwardVector(), false, false);
-		firing = true;
+		rightFire = true;
 	}
 	/*
 	// try and play the sound if specified
@@ -164,9 +172,37 @@ void AMyProject2Character::RightFire()
 	*/
 }
 
-void AMyProject2Character::StopFire()
+void AMyProject2Character::FireAgain()
 {
-	firing = false;
+
+	// try and fire a projectile
+	if (ProjectileClass != NULL)
+	{
+		const FRotator SpawnRotation = GetControlRotation();
+		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
+		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
+
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		UWorld* const World = GetWorld();
+		if (World != NULL)
+		{
+			// spawn the projectile at the muzzle
+			World->SpawnActor<AMyProject2Projectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+		}
+		LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+	}
+}
+
+void AMyProject2Character::StopLeftFire()
+{
+	leftFire = false;
+	leftFireDelay = 30;
+}
+
+void AMyProject2Character::StopRightFire()
+{
+	rightFire = false;
+	rightFireDelay = 30;
 }
 
 void AMyProject2Character::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
@@ -206,4 +242,23 @@ void AMyProject2Character::LookUpAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AMyProject2Character::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
+	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+	if(leftFire) {
+		leftFireDelay--;
+		if (leftFireDelay <= 0) {
+			OnFire();
+			leftFireDelay = 30;
+		}
+	}
+	if (rightFire) {
+		rightFireDelay--;
+		if (rightFireDelay <= 0) {
+			RightFire();
+			rightFireDelay = 30;
+		}
+	}
+	
 }
