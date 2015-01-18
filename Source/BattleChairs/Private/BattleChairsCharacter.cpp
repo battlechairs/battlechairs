@@ -3,7 +3,9 @@
 #include "BattleChairs.h"
 #include "BattleChairsCharacter.h"
 #include "BattleChairsProjectile.h"
+#include "ProjectileParent.h"
 #include "Animation/AnimInstance.h"
+
 
 
 //////////////////////////////////////////////////////////////////////////
@@ -24,8 +26,11 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 
 	leftFire = false;
 	rightFire = false;
-	leftFireDelay = 30;
-	rightFireDelay = 30;
+	leftFireDelay = 10;
+	rightFireDelay = 10;
+	float thrusterF = 0;
+	float thrusterL = 0;
+	float thrusterR = 0;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
@@ -56,6 +61,14 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	// set up gameplay key bindings
 	check(InputComponent);
 
+	//Thruster Controls
+	InputComponent->BindAction("ThrusterFUpButton", IE_Pressed, this, &ABattleChairsCharacter::ThrusterFUp);
+	InputComponent->BindAction("ThrusterFDownButton", IE_Pressed, this, &ABattleChairsCharacter::ThrusterFDown);
+	InputComponent->BindAction("ThrusterLUpButton", IE_Pressed, this, &ABattleChairsCharacter::ThrusterLUp);
+	InputComponent->BindAction("ThrusterLDownButton", IE_Pressed, this, &ABattleChairsCharacter::ThrusterLDown);
+	InputComponent->BindAction("ThrusterRUpButton", IE_Pressed, this, &ABattleChairsCharacter::ThrusterRUp);
+	InputComponent->BindAction("ThrusterRDownButton", IE_Pressed, this, &ABattleChairsCharacter::ThrusterRDown);
+
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	
@@ -76,10 +89,12 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAxis("TurnRate", this, &ABattleChairsCharacter::TurnAtRate);
 	InputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ABattleChairsCharacter::LookUpAtRate);
+
+
 }
+
 void ABattleChairsCharacter::OnFire()
 {
-
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
@@ -173,13 +188,13 @@ void ABattleChairsCharacter::RightFire()
 void ABattleChairsCharacter::StopLeftFire()
 {
 	leftFire = false;
-	leftFireDelay = 30;
+	leftFireDelay = 10;
 }
 
 void ABattleChairsCharacter::StopRightFire()
 {
 	rightFire = false;
-	rightFireDelay = 30;
+	rightFireDelay = 10;
 }
 void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
@@ -208,6 +223,76 @@ void ABattleChairsCharacter::MoveRight(float Value)
 	}
 }
 
+void ABattleChairsCharacter::ThrusterFUp()
+{
+	UE_LOG(LogTemp, Warning, TEXT("thrusterFUp"));
+	if (thrusterF <= 3) thrusterF += 0.1f;
+}
+
+void ABattleChairsCharacter::ThrusterFDown()
+{
+	UE_LOG(LogTemp, Warning, TEXT("thrusterFDown"));
+	if (thrusterF >= .1f) thrusterF -= 0.1f;
+}
+
+void ABattleChairsCharacter::ThrusterLUp()
+{
+	UE_LOG(LogTemp, Warning, TEXT("thrusterLUp"));
+	if (thrusterL <= 3) thrusterL += 0.1f;
+}
+
+void ABattleChairsCharacter::ThrusterLDown()
+{
+	UE_LOG(LogTemp, Warning, TEXT("thrusterLDown"));
+	if (thrusterL >= 0.1) thrusterL -= 0.1f;
+}
+
+void ABattleChairsCharacter::ThrusterRUp()
+{
+	UE_LOG(LogTemp, Warning, TEXT("thrusterRUp"));
+	if (thrusterR <= 3) thrusterR += 0.1f;
+}
+
+void ABattleChairsCharacter::ThrusterRDown()
+{
+	UE_LOG(LogTemp, Warning, TEXT("thrusterRDown"));
+	if (thrusterR >= 0.1) thrusterR -= 0.1f;
+}
+
+/*
+void ABattleChairsCharacter::ThrusterF(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// add movement in that direction
+		UE_LOG(LogTemp, Warning, TEXT("thrusterF"));
+		if (thrusterF <= 3 && Value >= 0) thrusterF += 0.1;
+		if (thrusterF < 0) thrusterF = 0;
+	}
+	
+}
+
+void ABattleChairsCharacter::ThrusterL(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// add movement in that direction
+		if (thrusterL <= 3) thrusterL += 0.1;
+		if (thrusterL <= 0) thrusterL = 0;
+	}
+}
+
+void ABattleChairsCharacter::ThrusterR(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// add movement in that direction
+		if (thrusterR <= 3) thrusterR += 0.1;
+		if (thrusterR <= 0) thrusterR = 0;
+	}
+}
+*/
+
 void ABattleChairsCharacter::TurnAtRate(float Rate)
 {
 	// calculate delta for this frame from the rate information
@@ -226,15 +311,29 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		leftFireDelay--;
 		if (leftFireDelay <= 0) {
 			OnFire();
-			leftFireDelay = 30;
+			leftFireDelay = 10;
 		}
 	}
 	if (rightFire) {
 		rightFireDelay--;
 		if (rightFireDelay <= 0) {
 			RightFire();
-			rightFireDelay = 30;
+			rightFireDelay = 10;
 		}
 	}
+	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
+
+	FRotator LeftThrusterOffSet = FRotator(0.0);
+	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);
+	FVector LeftThrusterDir = LeftThrusterOffSet.RotateVector(GetActorForwardVector());
+
+	FRotator RightThrusterOffSet = FRotator(0.0);
+	RightThrusterOffSet.Add(0.0f, -45.0f, 0.0f);
+	FVector RightThrusterDir = RightThrusterOffSet.RotateVector(GetActorForwardVector());
+
+	AddMovementInput(LeftThrusterDir, thrusterL);
+	AddMovementInput(RightThrusterDir, thrusterR);
+
+
 
 }

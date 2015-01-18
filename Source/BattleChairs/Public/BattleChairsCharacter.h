@@ -22,6 +22,10 @@ public:
 	int rightFireDelay;
 	int leftFireDelay;
 
+	float thrusterF;
+	float thrusterL;
+	float thrusterR;
+
 	ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer);
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
@@ -39,6 +43,10 @@ public:
 	/** Projectile class to spawn */
 	UPROPERTY(EditDefaultsOnly, Category=Projectile)
 	TSubclassOf<class ABattleChairsProjectile> ProjectileClass;
+
+	/** Projectile class to spawn */
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
+	TSubclassOf<class AProjectileParent> BulletClass;
 
 	/** Sound to play each time we fire */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Gameplay)
@@ -70,6 +78,13 @@ protected:
 
 	/** Handles stafing movement, left and right */
 	void MoveRight(float Val);
+
+	void ThrusterFUp();
+	void ThrusterFDown();
+	void ThrusterLUp();
+	void ThrusterLDown();
+	void ThrusterRUp();
+	void ThrusterRDown();
 
 	/**
 	 * Called via input to turn at a given rate.

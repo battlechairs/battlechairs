@@ -1,12 +1,15 @@
-// Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
+
 #include "GameFramework/Actor.h"
-#include "BattleChairsProjectile.generated.h"
+#include "ProjectileParent.generated.h"
 
 UCLASS(config = Game)
-class ABattleChairsProjectile : public AActor
+class AProjectileParent : public AActor
 {
 	GENERATED_BODY()
+	
 
 		/** Sphere collision component */
 		UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
@@ -17,7 +20,7 @@ class ABattleChairsProjectile : public AActor
 	class UProjectileMovementComponent* ProjectileMovement;
 
 public:
-	ABattleChairsProjectile(const FObjectInitializer& ObjectInitializer);
+	AProjectileParent(const FObjectInitializer& ObjectInitializer);
 
 	/** called when projectile hits something */
 	UFUNCTION()
@@ -27,5 +30,9 @@ public:
 	FORCEINLINE class USphereComponent* GetCollisionComp() const { return CollisionComp; }
 	/** Returns ProjectileMovement subobject **/
 	FORCEINLINE class UProjectileMovementComponent* GetProjectileMovement() const { return ProjectileMovement; }
+	
+	
 };
+
+
 
