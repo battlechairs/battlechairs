@@ -102,8 +102,12 @@ void ABattleChairsCharacter::OnFire()
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
-		turn.Add(0.0f, 3.0f, 0.0f);
-
+		if (rightFire == false){
+			turn.Add(0.0f, 3.0f, 0.0f);
+		}
+		else {
+			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+		}
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
@@ -114,7 +118,7 @@ void ABattleChairsCharacter::OnFire()
 		}
 
 		ClientSetRotation(SpawnRotation - turn);
-		LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		leftFire = true;
 	}
 	/*
@@ -149,8 +153,12 @@ void ABattleChairsCharacter::RightFire()
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
-		turn.Add(0.0f, -3.0f, 0.0f);
-
+		if (leftFire == false){
+			turn.Add(0.0f, -3.0f, 0.0f);
+		}
+		else {
+			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+		}
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
@@ -160,7 +168,7 @@ void ABattleChairsCharacter::RightFire()
 		}
 
 		ClientSetRotation(SpawnRotation - turn);
-		LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		rightFire = true;
 	}
 	/*
