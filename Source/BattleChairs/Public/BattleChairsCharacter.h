@@ -9,7 +9,7 @@ class ABattleChairsCharacter : public ACharacter
 	GENERATED_BODY()
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
+	UPROPERTY(VisibleAnywhere, Category=Mesh)
 	class USkeletalMeshComponent* Mesh1P;
 
 	/** First person camera */
@@ -57,21 +57,29 @@ public:
 	class UAnimMontage* FireAnimation;
 
 protected:
+	/** Fires a projectile (left click) with server validation*/
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_AttemptLeftFire();
+	void LeftFire();
 
-	/** Handler for a touch input beginning. */
-	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
+	/** Stops left fire with server validation */
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_AttemptStopLeftFire();
+	void StopLeftFire();
 
-	/** Fires a projectile. */
-	void OnFire();
-
-	/** Fires a projectile. */
+	/** Fires a projectile (right click) with dedicated server validation.*/
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_AttemptRightFire();
 	void RightFire();
 
-	/** Fires a projectile. */
+	/** Stops right fire with server validation */
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_AttemptStopRightFire();
 	void StopRightFire();
 
-	/** Fires a projectile. */
-	void StopLeftFire();
+	
+	/** Handler for a touch input beginning. */
+	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
 
 	/** Handles moving forward/backward */
 	void MoveForward(float Val);
