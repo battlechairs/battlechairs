@@ -40,7 +40,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	// Default offset from the character location for projectiles to spawn
-	GunOffset = FVector(100.0f, 30.0f, 10.0f);
+	GunOffset = FVector(0.0f, 0.0f, 0.0f);
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
@@ -120,7 +120,7 @@ void ABattleChairsCharacter::LeftFire()
 	{
 		const FRotator SpawnRotation = GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-		FVector offSet = FVector(0.0f, -60.0f, 0.0f);
+		FVector offSet = FVector(0.0f, -150.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
 			turn.Add(0.0f, 3.0f, 0.0f);
@@ -128,7 +128,9 @@ void ABattleChairsCharacter::LeftFire()
 		else {
 			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		}
-		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
+		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
+		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(testGunOffset) + SpawnRotation.RotateVector(offSet);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
 		{
@@ -221,7 +223,9 @@ void ABattleChairsCharacter::RightFire()
 		else {
 			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		}
-		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(testGunOffset);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
 		{
