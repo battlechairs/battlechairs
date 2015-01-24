@@ -54,6 +54,14 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	// derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 }
 
+//Mitch: destructor disconnects hardware
+ABattleChairsCharacter::~ABattleChairsCharacter() {
+	if (connected) {
+		CloseHandle(hSerial);
+		UE_LOG(LogTemp, Warning, TEXT("disconnected from Arduino hardware"));
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Bind Input
 
@@ -91,7 +99,51 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ABattleChairsCharacter::LookUpAtRate);
 
+	//Mitch: ---START OF HARDWARE BLOCK--
 
+	//Mitch: if hardware already connected (not sure how), disconnect
+	if (connected) {
+		CloseHandle(hSerial);
+		UE_LOG(LogTemp, Warning, TEXT("disconnected from Arduino hardware"));
+	}
+
+	//Mitch: if not connected to hardware (shouldn't be anyway), connect
+	if (!connected) {
+
+		//Mitch: connect to memory-mapped file, I think (might not always be COM6)
+		LPCWSTR portName = L"\\\\.\\COM6";
+		hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		//Mitch: check if CreateFile worked
+		if (hSerial == INVALID_HANDLE_VALUE) {
+			UE_LOG(LogTemp, Warning, TEXT("unable to connect to Arduino hardware"));
+		}
+		else {
+			connected = true;
+			DCB dcbSerialParams = { 0 };
+
+			if (!GetCommState(hSerial, &dcbSerialParams)) {
+				UE_LOG(LogTemp, Warning, TEXT("unable to get Arduino serial port"));
+			}
+			else {
+				//Mitch: ensure these settings match settings in device mananger
+				dcbSerialParams.BaudRate = CBR_9600;
+				dcbSerialParams.ByteSize = 8;
+				dcbSerialParams.StopBits = ONESTOPBIT;
+				dcbSerialParams.Parity = NOPARITY;
+
+				if (!SetCommState(hSerial, &dcbSerialParams)) {
+					UE_LOG(LogTemp, Warning, TEXT("unable to set Arduino serial port parameters"));
+				}
+				else {
+					UE_LOG(LogTemp, Warning, TEXT("successfully connected to Arduino hardware"));
+				}
+			}
+		}
+	}
+
+	//Mitch: ---END OF HARDWARE BLOCK--
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -413,6 +465,78 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	AddMovementInput(LeftThrusterDir, thrusterL);
 	AddMovementInput(RightThrusterDir, thrusterR);
 
+	//Mitch: ---START OF HARDWARE BLOCK--
 
+	//Mitch: temporary variables to read from hardware
+	DWORD32 bytesRead;
+	unsigned int toRead;
+	unsigned int nbChar = 100;
+	char buffer[100];
 
+	//Mitch: clear temporary buffer
+	for (unsigned int i = 0; i < 100; i++) buffer[i] = '\0';
+
+	//Mitch: don't know, apparently needed
+	ClearCommError(hSerial, (LPDWORD)(&errors), &status);
+
+	//Mitch: if data broadcast from hardware, read it
+	if (status.cbInQue > 0) {
+
+		//Mitch: make sure number of bytes to read does not exceed buffer size
+		if (status.cbInQue > nbChar) {
+			toRead = nbChar;
+		} else {
+			toRead = status.cbInQue;
+		}
+
+		//Mitch: try to read bytes from hardware, put into into temporary buffer
+		if (ReadFile(hSerial, (LPVOID)buffer, toRead, (LPDWORD)(&bytesRead), NULL) != 0) {
+
+			//Mitch: for debugging, can ignore this
+			//UE_LOG(LogTemp, Warning, TEXT("%s\n"), ANSI_TO_TCHAR(buffer));
+
+			//Mitch: push bytes from temporary buffer into control buffer
+			for (DWORD32 i = 0; i < bytesRead; i++) {
+				controlBuffer[controlBufferPos] = buffer[i];
+				controlBufferPos++;
+
+				//Mitch: when semi-colon is found, parse entire input command
+				if (buffer[i] == ';') {
+					UE_LOG(LogTemp, Warning, TEXT("Arduino input: %s\n"), ANSI_TO_TCHAR(controlBuffer));
+
+					//Mitch: initialized input variables, may be a problem later on
+					int button=0, encoderR=0, encoderL=0;
+
+					//Mitch: format string "button,encoderR,encoderL;" should be read
+					sscanf(controlBuffer, "%d,%d,%d;", &button, &encoderR, &encoderL);
+
+					//Mitch: set leftFire to button value (similar to holding mouse button)
+					leftFire = button ? 1 : 0;
+
+					//Mitch: set thrusterR to scaled down encoderR value
+					float tthrustR = (float)encoderR / 10.f;
+					if (tthrustR < 0.f) tthrustR = 0.f;
+					if (tthrustR > 3.f) tthrustR = 3.f;
+					thrusterR = tthrustR;
+
+					//Mitch: set thrusterL to scaled down encoderL value
+					float tthrustL = (float)encoderL / 10.f;
+					if (tthrustL < 0.f) tthrustL = 0.f;
+					if (tthrustL > 3.f) tthrustL = 3.f;
+					thrusterL = tthrustL;
+
+					//Mitch: for debugging, can ignore this
+					//UE_LOG(LogTemp, Warning, TEXT("button = %d\n"), button);
+					//UE_LOG(LogTemp, Warning, TEXT("encoderL = %d encoderR = %d\n"), encoderL, encoderR);
+
+					//Mitch: clear control buffer after successfully reading command, prepare for new input
+					for (unsigned int i = 0; i < controlBufferPos; i++) controlBuffer[i] = '\0';
+					controlBufferPos = 0;
+				}
+			}
+
+		}
+	}
+
+	//Mitch: ---END OF HARDWARE BLOCK--
 }
