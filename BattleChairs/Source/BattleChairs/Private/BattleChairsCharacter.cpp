@@ -157,7 +157,7 @@ void ABattleChairsCharacter::RightFire()
 			turn.Add(0.0f, -3.0f, 0.0f);
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(-400 * GetActorForwardVector(), false, false);
 		}
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		UWorld* const World = GetWorld();
@@ -319,14 +319,14 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		leftFireDelay--;
 		if (leftFireDelay <= 0) {
 			OnFire();
-			leftFireDelay = 10;
+			leftFireDelay = 1;
 		}
 	}
 	if (rightFire) {
 		rightFireDelay--;
 		if (rightFireDelay <= 0) {
 			RightFire();
-			rightFireDelay = 10;
+			rightFireDelay = 1;
 		}
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
