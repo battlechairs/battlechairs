@@ -1,6 +1,7 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 
 #include "BattleChairs.h"
+#include "UnrealNetwork.h"
 #include "BattleChairsCharacter.h"
 #include "BattleChairsProjectile.h"
 #include "ProjectileParent.h"
@@ -54,7 +55,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Input
+// Bind Input
 
 void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* InputComponent)
 {
@@ -72,10 +73,10 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	
-	InputComponent->BindAction("Fire", IE_Pressed, this, &ABattleChairsCharacter::OnFire);
-	InputComponent->BindAction("SecondaryFire", IE_Pressed, this, &ABattleChairsCharacter::RightFire);
-	InputComponent->BindAction("Fire", IE_Released, this, &ABattleChairsCharacter::StopLeftFire);
-	InputComponent->BindAction("SecondaryFire", IE_Released, this, &ABattleChairsCharacter::StopRightFire);
+	InputComponent->BindAction("Fire", IE_Pressed, this, &ABattleChairsCharacter::Server_AttemptLeftFire);
+	InputComponent->BindAction("SecondaryFire", IE_Pressed, this, &ABattleChairsCharacter::Server_AttemptRightFire);
+	InputComponent->BindAction("Fire", IE_Released, this, &ABattleChairsCharacter::Server_AttemptStopLeftFire);
+	InputComponent->BindAction("SecondaryFire", IE_Released, this, &ABattleChairsCharacter::Server_AttemptStopRightFire);
 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ABattleChairsCharacter::TouchStarted);
 
@@ -93,7 +94,26 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 
 }
 
-void ABattleChairsCharacter::OnFire()
+//////////////////////////////////////////////////////////////////////////
+// Left Fire
+
+// Don't worry if there are red squigly lines on the functions below, it will still compile
+
+/* Validation */
+bool ABattleChairsCharacter::Server_AttemptLeftFire_Validate()
+{
+	return true; // We can insert code here to test if they are allowed to fire, for example if they have ammo or not
+}
+/* Attempt to fire projectile */
+void ABattleChairsCharacter::Server_AttemptLeftFire_Implementation()
+{
+	if (Role == ROLE_Authority)
+	{
+		LeftFire();
+	}
+}
+/* Fire projectile */
+void ABattleChairsCharacter::LeftFire()
 {
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
@@ -142,7 +162,49 @@ void ABattleChairsCharacter::OnFire()
 	*/
 }
 
+/* Validation */
+bool ABattleChairsCharacter::Server_AttemptStopLeftFire_Validate()
+{
+	return true; //dont know why we need the validation to stop firing, but it doesnt work without it
+}
 
+/* Attempt to stop firing */
+void ABattleChairsCharacter::Server_AttemptStopLeftFire_Implementation()
+{
+	if (Role == ROLE_Authority)
+	{
+		StopLeftFire();
+	}
+}
+
+/* Stop firing */
+void ABattleChairsCharacter::StopLeftFire()
+{
+	leftFire = false;
+	leftFireDelay = 10;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// Right Fire
+
+// dont worry if there are red squigly lines on the functions below, it will still compile
+
+/* Validation */
+bool ABattleChairsCharacter::Server_AttemptRightFire_Validate()
+{
+	return true; //We can insert code here to test if they are allowed to fire, for example if they have ammo or not
+}
+
+/* Attempt to fire projectile */
+void ABattleChairsCharacter::Server_AttemptRightFire_Implementation()
+{
+	if (Role == ROLE_Authority)
+	{
+		RightFire();
+	}
+}
+
+/* Fire projectile */
 void ABattleChairsCharacter::RightFire()
 {
 
@@ -191,25 +253,34 @@ void ABattleChairsCharacter::RightFire()
 	}
 	*/
 }
-
-
-void ABattleChairsCharacter::StopLeftFire()
+/* Validation */
+bool ABattleChairsCharacter::Server_AttemptStopRightFire_Validate()
 {
-	leftFire = false;
-	leftFireDelay = 10;
+	return true; //dont know why we need the validation to stop firing, but it doesnt work without it
 }
 
+/* Attempt to stop firing */
+void ABattleChairsCharacter::Server_AttemptStopRightFire_Implementation()
+{
+	if (Role == ROLE_Authority)
+	{
+		StopRightFire();
+	}
+}
+
+/* Stop firing */
 void ABattleChairsCharacter::StopRightFire()
 {
 	rightFire = false;
 	rightFireDelay = 10;
 }
+
 void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
 	// only fire for first finger down
 	if (FingerIndex == 0)
 	{
-		OnFire();
+		LeftFire();
 	}
 }
 
@@ -318,7 +389,7 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	if (leftFire) {
 		leftFireDelay--;
 		if (leftFireDelay <= 0) {
-			OnFire();
+			LeftFire();
 			leftFireDelay = 10;
 		}
 	}

@@ -1,6 +1,7 @@
 // Copyright 1998-2014 Epic Games, Inc. All Rights Reserved.
 #pragma once
 #include "GameFramework/Actor.h"
+#include "UnrealNetwork.h"
 #include "BattleChairsProjectile.generated.h"
 
 UCLASS(config = Game)

@@ -3,7 +3,7 @@
 #ifndef __BATTLECHAIRS_H__
 #define __BATTLECHAIRS_H__
 
-#include "EngineMinimal.h"
+#include "Engine.h"
 
 
 #endif
