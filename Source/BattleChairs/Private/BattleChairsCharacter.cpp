@@ -32,6 +32,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	float thrusterF = 0;
 	float thrusterL = 0;
 	float thrusterR = 0;
+	lift = 0;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
@@ -417,6 +418,18 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	AddMovementInput(LeftThrusterDir, thrusterL);
 	AddMovementInput(RightThrusterDir, thrusterR);
 
+	lift = min(thrusterF, thrusterL, thrusterR);
+	if (lift > .4) {
+		lift = 25 + sqrt(lift * 100) - (GetActorLocation().Z)/120;
+		FVector up = FVector(0, 0, lift);
+		LaunchCharacter(up, false, false);
+	}
 
 
+}
+
+float ABattleChairsCharacter::min(float a, float b, float c) {
+	if (a < b && a < c) return a;
+	if (b < c) return b;
+	return c;
 }

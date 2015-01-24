@@ -25,6 +25,7 @@ public:
 	float thrusterF;
 	float thrusterL;
 	float thrusterR;
+	float lift;
 
 	ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer);
 
@@ -105,6 +106,8 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	float min(float a, float b, float c);
 
 	void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction);
 
