@@ -27,7 +27,18 @@ public:
 	float thrusterR;
 	float lift;
 
+	//Mitch: these variables are for hardware communication
+	HANDLE hSerial;
+	COMSTAT status;
+	DWORD32 errors;
+	bool connected = false;
+	char controlBuffer[100];
+	unsigned int controlBufferPos = 0;
+
 	ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer);
+
+	//Mitch: destructor disconnects from hardware
+	~ABattleChairsCharacter();
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
