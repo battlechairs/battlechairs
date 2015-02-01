@@ -22,6 +22,9 @@ public:
 	int rightFireDelay;
 	int leftFireDelay;
 
+	float firerate;
+	float knockback;
+	float turnrate;
 	float thrusterF;
 	float thrusterL;
 	float thrusterR;
