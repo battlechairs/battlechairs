@@ -36,9 +36,10 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
-	//FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
+	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
 	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = false;
+	//thrusterFPS = ObjectInitializer.CreateDefaultSubobject<UParticleSystem>(this, TEXT("thrusterFPS"));
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(0.0f, 0.0f, 0.0f);
@@ -46,7 +47,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
-	//Mesh1P->AttachParent = FirstPersonCameraComponent;
+	Mesh1P->AttachParent = FirstPersonCameraComponent;
 	Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
@@ -395,6 +396,11 @@ void ABattleChairsCharacter::ThrusterRDown()
 	if (thrusterR >= 0.1) thrusterR -= 0.1f;
 }
 
+bool ABattleChairsCharacter::ThrusterFON()
+{
+	return (thrusterF > 0);
+}
+
 /*
 void ABattleChairsCharacter::ThrusterF(float Value)
 {
@@ -476,7 +482,6 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		FVector up = FVector(0, 0, lift);
 		LaunchCharacter(up, false, false);
 	}
-
 	//Mitch: ---START OF HARDWARE BLOCK--
 
 	//Mitch: temporary variables to read from hardware
