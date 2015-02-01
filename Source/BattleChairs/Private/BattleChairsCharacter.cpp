@@ -27,12 +27,15 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 
 	leftFire = false;
 	rightFire = false;
-	leftFireDelay = 10;
-	rightFireDelay = 10;
-	float thrusterF = 0;
-	float thrusterL = 0;
-	float thrusterR = 0;
+	leftFireDelay = firerate;
+	rightFireDelay = firerate;
+	thrusterF = 0;
+	thrusterL = 0;
+	thrusterR = 0;
 	lift = 0;
+	firerate = 5;
+	knockback = -100;
+	turnrate = 5;
 
 	rotationalVelocity = 0.f;
 	rotationalDrag = 1.1f;
@@ -184,7 +187,7 @@ void ABattleChairsCharacter::LeftFire()
 			rotationalVelocity += +3.f;
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
 		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
@@ -241,7 +244,7 @@ void ABattleChairsCharacter::Server_AttemptStopLeftFire_Implementation()
 void ABattleChairsCharacter::StopLeftFire()
 {
 	leftFire = false;
-	leftFireDelay = 10;
+	leftFireDelay = firerate;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -280,7 +283,7 @@ void ABattleChairsCharacter::RightFire()
 			rotationalVelocity += -3.f;
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
@@ -335,7 +338,7 @@ void ABattleChairsCharacter::Server_AttemptStopRightFire_Implementation()
 void ABattleChairsCharacter::StopRightFire()
 {
 	rightFire = false;
-	rightFireDelay = 10;
+	rightFireDelay = firerate;
 }
 
 void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
@@ -458,14 +461,14 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		leftFireDelay--;
 		if (leftFireDelay <= 0) {
 			LeftFire();
-			leftFireDelay = 10;
+			leftFireDelay = firerate;
 		}
 	}
 	if (rightFire) {
 		rightFireDelay--;
 		if (rightFireDelay <= 0) {
 			RightFire();
-			rightFireDelay = 10;
+			rightFireDelay = firerate;
 		}
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);

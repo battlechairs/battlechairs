@@ -22,6 +22,10 @@ public:
 	int rightFireDelay;
 	int leftFireDelay;
 
+
+	float firerate;
+	float knockback;
+	float turnrate;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterF)
 	float thrusterF;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterL)
