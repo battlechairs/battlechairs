@@ -27,18 +27,25 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 
 	leftFire = false;
 	rightFire = false;
-	leftFireDelay = 10;
-	rightFireDelay = 10;
-	float thrusterF = 0;
-	float thrusterL = 0;
-	float thrusterR = 0;
+	leftFireDelay = firerate;
+	rightFireDelay = firerate;
+	thrusterF = 0;
+	thrusterL = 0;
+	thrusterR = 0;
 	lift = 0;
+	firerate = 5;
+	knockback = -100;
+	turnrate = 5;
+
+	rotationalVelocity = 0.f;
+	rotationalDrag = 1.1f;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
-	//FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
+	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
 	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = false;
+	//thrusterFPS = ObjectInitializer.CreateDefaultSubobject<UParticleSystem>(this, TEXT("thrusterFPS"));
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(0.0f, 0.0f, 0.0f);
@@ -46,7 +53,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
-	//Mesh1P->AttachParent = FirstPersonCameraComponent;
+	Mesh1P->AttachParent = FirstPersonCameraComponent;
 	Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
@@ -176,10 +183,11 @@ void ABattleChairsCharacter::LeftFire()
 		FVector offSet = FVector(0.0f, -150.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
-			turn.Add(0.0f, 3.0f, 0.0f);
+			//turn.Add(0.0f, 3.0f, 0.0f);
+			rotationalVelocity += +3.f;
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
 		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
@@ -236,7 +244,7 @@ void ABattleChairsCharacter::Server_AttemptStopLeftFire_Implementation()
 void ABattleChairsCharacter::StopLeftFire()
 {
 	leftFire = false;
-	leftFireDelay = 10;
+	leftFireDelay = firerate;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -271,10 +279,11 @@ void ABattleChairsCharacter::RightFire()
 		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (leftFire == false){
-			turn.Add(0.0f, -3.0f, 0.0f);
+			//turn.Add(0.0f, -3.0f, 0.0f);
+			rotationalVelocity += -3.f;
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
@@ -329,7 +338,7 @@ void ABattleChairsCharacter::Server_AttemptStopRightFire_Implementation()
 void ABattleChairsCharacter::StopRightFire()
 {
 	rightFire = false;
-	rightFireDelay = 10;
+	rightFireDelay = firerate;
 }
 
 void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
@@ -395,6 +404,11 @@ void ABattleChairsCharacter::ThrusterRDown()
 	if (thrusterR >= 0.1) thrusterR -= 0.1f;
 }
 
+bool ABattleChairsCharacter::ThrusterFON()
+{
+	return (thrusterF > 0);
+}
+
 /*
 void ABattleChairsCharacter::ThrusterF(float Value)
 {
@@ -447,17 +461,26 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		leftFireDelay--;
 		if (leftFireDelay <= 0) {
 			LeftFire();
-			leftFireDelay = 10;
+			leftFireDelay = firerate;
 		}
 	}
 	if (rightFire) {
 		rightFireDelay--;
 		if (rightFireDelay <= 0) {
 			RightFire();
-			rightFireDelay = 10;
+			rightFireDelay = firerate;
 		}
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
+
+	if (abs(rotationalVelocity) > 0.0001f) {
+		const FRotator SpawnRotation = GetControlRotation();
+		FRotator turn = FRotator(0.0);
+		turn.Add(0.f, rotationalVelocity, 0.f);
+		rotationalVelocity /= rotationalDrag;
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		ClientSetRotation(SpawnRotation - turn);
+	}
 
 	FRotator LeftThrusterOffSet = FRotator(0.0);
 	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);
@@ -476,7 +499,6 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		FVector up = FVector(0, 0, lift);
 		LaunchCharacter(up, false, false);
 	}
-
 	//Mitch: ---START OF HARDWARE BLOCK--
 
 	//Mitch: temporary variables to read from hardware
@@ -517,19 +539,34 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 					UE_LOG(LogTemp, Warning, TEXT("Arduino input: %s\n"), ANSI_TO_TCHAR(controlBuffer));
 
 					//Mitch: initialized input variables, may be a problem later on
-					int button=0, encoderR=0, encoderL=0;
+					int buttonR=0, buttonL=0, encoderR=0, encoderF=0, encoderL=0;
 
 					//Mitch: format string "button,encoderR,encoderL;" should be read
-					sscanf(controlBuffer, "%d,%d,%d;", &button, &encoderR, &encoderL);
+					sscanf(controlBuffer, "%d,%d,%d,%d,%d;", &buttonR, &buttonL, &encoderR, &encoderF, &encoderL);
 
-					//Mitch: set leftFire to button value (similar to holding mouse button)
-					leftFire = button ? 1 : 0;
+					//Mitch: set rightFire to buttonR value (similar to holding right mouse button)
+					//rightFire = buttonR ? 1 : 0;
+					if (buttonR) {
+						RightFire();
+					}
+					else {
+						StopRightFire();
+					}
+
+					//Mitch: set leftFire to buttonL value (similar to holding left mouse button)
+					leftFire = buttonL ? 1 : 0;
 
 					//Mitch: set thrusterR to scaled down encoderR value
 					float tthrustR = (float)encoderR / 10.f;
 					if (tthrustR < 0.f) tthrustR = 0.f;
 					if (tthrustR > 3.f) tthrustR = 3.f;
 					thrusterR = tthrustR;
+
+					//Mitch: set thrusterF to scaled down encoderF value
+					float tthrustF = (float)encoderF / 10.f;
+					if (tthrustF < 0.f) tthrustF = 0.f;
+					if (tthrustF > 3.f) tthrustF = 3.f;
+					thrusterF = tthrustF;
 
 					//Mitch: set thrusterL to scaled down encoderL value
 					float tthrustL = (float)encoderL / 10.f;
