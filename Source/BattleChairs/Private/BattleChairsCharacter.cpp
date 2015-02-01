@@ -37,6 +37,9 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	knockback = -100;
 	turnrate = 5;
 
+	rotationalVelocity = 0.f;
+	rotationalDrag = 1.1f;
+
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
@@ -180,7 +183,8 @@ void ABattleChairsCharacter::LeftFire()
 		FVector offSet = FVector(0.0f, -150.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
-			turn.Add(0.0f, turnrate, 0.0f);
+			//turn.Add(0.0f, 3.0f, 0.0f);
+			rotationalVelocity += +3.f;
 		}
 		else {
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
@@ -275,7 +279,8 @@ void ABattleChairsCharacter::RightFire()
 		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (leftFire == false){
-			turn.Add(0.0f, -turnrate, 0.0f);
+			//turn.Add(0.0f, -3.0f, 0.0f);
+			rotationalVelocity += -3.f;
 		}
 		else {
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
@@ -468,6 +473,15 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
 
+	if (abs(rotationalVelocity) > 0.0001f) {
+		const FRotator SpawnRotation = GetControlRotation();
+		FRotator turn = FRotator(0.0);
+		turn.Add(0.f, rotationalVelocity, 0.f);
+		rotationalVelocity /= rotationalDrag;
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		ClientSetRotation(SpawnRotation - turn);
+	}
+
 	FRotator LeftThrusterOffSet = FRotator(0.0);
 	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);
 	FVector LeftThrusterDir = LeftThrusterOffSet.RotateVector(GetActorForwardVector());
@@ -525,19 +539,34 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 					UE_LOG(LogTemp, Warning, TEXT("Arduino input: %s\n"), ANSI_TO_TCHAR(controlBuffer));
 
 					//Mitch: initialized input variables, may be a problem later on
-					int button=0, encoderR=0, encoderL=0;
+					int buttonR=0, buttonL=0, encoderR=0, encoderF=0, encoderL=0;
 
 					//Mitch: format string "button,encoderR,encoderL;" should be read
-					sscanf(controlBuffer, "%d,%d,%d;", &button, &encoderR, &encoderL);
+					sscanf(controlBuffer, "%d,%d,%d,%d,%d;", &buttonR, &buttonL, &encoderR, &encoderF, &encoderL);
 
-					//Mitch: set leftFire to button value (similar to holding mouse button)
-					leftFire = button ? 1 : 0;
+					//Mitch: set rightFire to buttonR value (similar to holding right mouse button)
+					//rightFire = buttonR ? 1 : 0;
+					if (buttonR) {
+						RightFire();
+					}
+					else {
+						StopRightFire();
+					}
+
+					//Mitch: set leftFire to buttonL value (similar to holding left mouse button)
+					leftFire = buttonL ? 1 : 0;
 
 					//Mitch: set thrusterR to scaled down encoderR value
 					float tthrustR = (float)encoderR / 10.f;
 					if (tthrustR < 0.f) tthrustR = 0.f;
 					if (tthrustR > 3.f) tthrustR = 3.f;
 					thrusterR = tthrustR;
+
+					//Mitch: set thrusterF to scaled down encoderF value
+					float tthrustF = (float)encoderF / 10.f;
+					if (tthrustF < 0.f) tthrustF = 0.f;
+					if (tthrustF > 3.f) tthrustF = 3.f;
+					thrusterF = tthrustF;
 
 					//Mitch: set thrusterL to scaled down encoderL value
 					float tthrustL = (float)encoderL / 10.f;

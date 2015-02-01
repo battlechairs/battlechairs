@@ -34,6 +34,9 @@ public:
 	float thrusterR;
 	float lift;
 
+	float rotationalVelocity;
+	float rotationalDrag;
+
 	//Mitch: these variables are for hardware communication
 	HANDLE hSerial;
 	COMSTAT status;
