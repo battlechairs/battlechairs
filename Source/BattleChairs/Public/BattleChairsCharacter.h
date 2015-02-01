@@ -22,11 +22,15 @@ public:
 	int rightFireDelay;
 	int leftFireDelay;
 
+
 	float firerate;
 	float knockback;
 	float turnrate;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterF)
 	float thrusterF;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterL)
 	float thrusterL;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterR)
 	float thrusterR;
 	float lift;
 
@@ -108,7 +112,7 @@ protected:
 	void ThrusterLDown();
 	void ThrusterRUp();
 	void ThrusterRDown();
-
+	bool ThrusterFON();
 	/**
 	 * Called via input to turn at a given rate.
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate

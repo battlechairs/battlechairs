@@ -42,6 +42,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
 	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = false;
+	//thrusterFPS = ObjectInitializer.CreateDefaultSubobject<UParticleSystem>(this, TEXT("thrusterFPS"));
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(0.0f, 0.0f, 0.0f);
@@ -398,6 +399,11 @@ void ABattleChairsCharacter::ThrusterRDown()
 	if (thrusterR >= 0.1) thrusterR -= 0.1f;
 }
 
+bool ABattleChairsCharacter::ThrusterFON()
+{
+	return (thrusterF > 0);
+}
+
 /*
 void ABattleChairsCharacter::ThrusterF(float Value)
 {
@@ -479,7 +485,6 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		FVector up = FVector(0, 0, lift);
 		LaunchCharacter(up, false, false);
 	}
-
 	//Mitch: ---START OF HARDWARE BLOCK--
 
 	//Mitch: temporary variables to read from hardware
