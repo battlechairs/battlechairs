@@ -22,6 +22,8 @@ public:
 	int rightFireDelay;
 	int leftFireDelay;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
+		float PlayerHealth;
 
 	float firerate;
 	float knockback;

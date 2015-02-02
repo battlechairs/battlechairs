@@ -28,7 +28,7 @@ ABattleChairsHUD::ABattleChairsHUD(const class FObjectInitializer& PCIP) : Super
 	thrusterTest = ThrusterTest.Object;
 }
 
-int32 health = 300;
+int32 health1 = 300;
 int32 thrusterl = 0;
 int32 thrusterr = 0;
 int32 thrusterf = 0;
@@ -49,6 +49,7 @@ void ABattleChairsHUD::DrawHUD()
 		getThrusterF = MyPawn->thrusterF;
 		getThrusterL = MyPawn->thrusterL;
 		getThrusterR = MyPawn->thrusterR;
+		health1 = MyPawn->PlayerHealth; 
 		UE_LOG(YourLog, Warning, TEXT("original front thruster value is %f"), getThrusterF);
 	}
 	
@@ -85,14 +86,6 @@ void ABattleChairsHUD::DrawHUD()
 	LeftThrusterBar.Size.Y *= 0;
 	// Draw the item
 	Canvas->DrawItem(LeftThrusterBar);
-
-	//On key state 'right arrow key' the health will increase and max at 200
-	if (GetAsyncKeyState(VK_RIGHT) != 0 && health < 196)
-		health += 5;
-	//On key state 'left arrow key' the health will decrease
-	if (GetAsyncKeyState(0x25) != 0 && health > 5)
-		health -= 5;
-
 
 	if (GetAsyncKeyState(0x46) != 0 || GetAsyncKeyState(0x56) != 0){
 		leftThruster = getThrusterL;
@@ -169,7 +162,9 @@ void ABattleChairsHUD::drawHealthBar()
 	//Get scale for the UI
 	float ScaleUI = Canvas->ClipY / Canvas->ClipX;
 	//Make the health bar icon and draw it in the top left of the screen
-	FCanvasIcon HealthBarIcon = UCanvas::MakeIcon(HealthBarTexture, 0, 0, health, 20);
+	float length = health1 * 5;
+	if (length <= 0) length = 0;
+	FCanvasIcon HealthBarIcon = UCanvas::MakeIcon(HealthBarTexture, 0, 0, length, 20);
 	Canvas->DrawIcon(HealthBarIcon, 10, 20, ScaleUI);
 }
 

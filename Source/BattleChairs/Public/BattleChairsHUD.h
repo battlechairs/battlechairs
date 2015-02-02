@@ -20,6 +20,8 @@ public:
 	UTexture2D* ThrusterRTexture;
 	UTexture2D* ThrusterFTexture;
 	UTexture2D* thrusterTest;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
+	float Health;
 
 private:
 	/** Crosshair asset pointer */
