@@ -27,18 +27,25 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 
 	leftFire = false;
 	rightFire = false;
-	leftFireDelay = 10;
-	rightFireDelay = 10;
-	float thrusterF = 0;
-	float thrusterL = 0;
-	float thrusterR = 0;
+	leftFireDelay = firerate;
+	rightFireDelay = firerate;
+	thrusterF = 0;
+	thrusterL = 0;
+	thrusterR = 0;
 	lift = 0;
+	firerate = 5;
+	knockback = -100;
+	turnrate = 5;
+
+	rotationalVelocity = 0.f;
+	rotationalDrag = 1.1f;
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
-	//FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
+	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
 	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = false;
+	//thrusterFPS = ObjectInitializer.CreateDefaultSubobject<UParticleSystem>(this, TEXT("thrusterFPS"));
 
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(0.0f, 0.0f, 0.0f);
@@ -46,13 +53,21 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
 	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
-	//Mesh1P->AttachParent = FirstPersonCameraComponent;
+	Mesh1P->AttachParent = FirstPersonCameraComponent;
 	Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P are set in the
 	// derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+}
+
+//Mitch: destructor disconnects hardware
+ABattleChairsCharacter::~ABattleChairsCharacter() {
+	if (connected) {
+		CloseHandle(hSerial);
+		UE_LOG(LogTemp, Warning, TEXT("disconnected from Arduino hardware"));
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -92,7 +107,51 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	InputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	InputComponent->BindAxis("LookUpRate", this, &ABattleChairsCharacter::LookUpAtRate);
 
+	//Mitch: ---START OF HARDWARE BLOCK--
 
+	//Mitch: if hardware already connected (not sure how), disconnect
+	if (connected) {
+		CloseHandle(hSerial);
+		UE_LOG(LogTemp, Warning, TEXT("disconnected from Arduino hardware"));
+	}
+
+	//Mitch: if not connected to hardware (shouldn't be anyway), connect
+	if (!connected) {
+
+		//Mitch: connect to memory-mapped file, I think (might not always be COM6)
+		LPCWSTR portName = L"\\\\.\\COM6";
+		hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
+			0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		//Mitch: check if CreateFile worked
+		if (hSerial == INVALID_HANDLE_VALUE) {
+			UE_LOG(LogTemp, Warning, TEXT("unable to connect to Arduino hardware"));
+		}
+		else {
+			connected = true;
+			DCB dcbSerialParams = { 0 };
+
+			if (!GetCommState(hSerial, &dcbSerialParams)) {
+				UE_LOG(LogTemp, Warning, TEXT("unable to get Arduino serial port"));
+			}
+			else {
+				//Mitch: ensure these settings match settings in device mananger
+				dcbSerialParams.BaudRate = CBR_9600;
+				dcbSerialParams.ByteSize = 8;
+				dcbSerialParams.StopBits = ONESTOPBIT;
+				dcbSerialParams.Parity = NOPARITY;
+
+				if (!SetCommState(hSerial, &dcbSerialParams)) {
+					UE_LOG(LogTemp, Warning, TEXT("unable to set Arduino serial port parameters"));
+				}
+				else {
+					UE_LOG(LogTemp, Warning, TEXT("successfully connected to Arduino hardware"));
+				}
+			}
+		}
+	}
+
+	//Mitch: ---END OF HARDWARE BLOCK--
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -124,10 +183,11 @@ void ABattleChairsCharacter::LeftFire()
 		FVector offSet = FVector(0.0f, -150.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
-			turn.Add(0.0f, 3.0f, 0.0f);
+			//turn.Add(0.0f, 3.0f, 0.0f);
+			rotationalVelocity += +3.f;
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
 		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
@@ -184,7 +244,7 @@ void ABattleChairsCharacter::Server_AttemptStopLeftFire_Implementation()
 void ABattleChairsCharacter::StopLeftFire()
 {
 	leftFire = false;
-	leftFireDelay = 10;
+	leftFireDelay = firerate;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -219,10 +279,11 @@ void ABattleChairsCharacter::RightFire()
 		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (leftFire == false){
-			turn.Add(0.0f, -3.0f, 0.0f);
+			//turn.Add(0.0f, -3.0f, 0.0f);
+			rotationalVelocity += -3.f;
 		}
 		else {
-			LaunchPawn(-1000 * GetActorForwardVector(), false, false);
+			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
@@ -277,7 +338,7 @@ void ABattleChairsCharacter::Server_AttemptStopRightFire_Implementation()
 void ABattleChairsCharacter::StopRightFire()
 {
 	rightFire = false;
-	rightFireDelay = 10;
+	rightFireDelay = firerate;
 }
 
 void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location)
@@ -343,6 +404,11 @@ void ABattleChairsCharacter::ThrusterRDown()
 	if (thrusterR >= 0.1) thrusterR -= 0.1f;
 }
 
+bool ABattleChairsCharacter::ThrusterFON()
+{
+	return (thrusterF > 0);
+}
+
 /*
 void ABattleChairsCharacter::ThrusterF(float Value)
 {
@@ -395,17 +461,26 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		leftFireDelay--;
 		if (leftFireDelay <= 0) {
 			LeftFire();
-			leftFireDelay = 10;
+			leftFireDelay = firerate;
 		}
 	}
 	if (rightFire) {
 		rightFireDelay--;
 		if (rightFireDelay <= 0) {
 			RightFire();
-			rightFireDelay = 10;
+			rightFireDelay = firerate;
 		}
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
+
+	if (abs(rotationalVelocity) > 0.0001f) {
+		const FRotator SpawnRotation = GetControlRotation();
+		FRotator turn = FRotator(0.0);
+		turn.Add(0.f, rotationalVelocity, 0.f);
+		rotationalVelocity /= rotationalDrag;
+		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
+		ClientSetRotation(SpawnRotation - turn);
+	}
 
 	FRotator LeftThrusterOffSet = FRotator(0.0);
 	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);
@@ -424,8 +499,95 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		FVector up = FVector(0, 0, lift);
 		LaunchCharacter(up, false, false);
 	}
+	//Mitch: ---START OF HARDWARE BLOCK--
 
+	//Mitch: temporary variables to read from hardware
+	DWORD32 bytesRead;
+	unsigned int toRead;
+	unsigned int nbChar = 100;
+	char buffer[100];
 
+	//Mitch: clear temporary buffer
+	for (unsigned int i = 0; i < 100; i++) buffer[i] = '\0';
+
+	//Mitch: don't know, apparently needed
+	ClearCommError(hSerial, (LPDWORD)(&errors), &status);
+
+	//Mitch: if data broadcast from hardware, read it
+	if (status.cbInQue > 0) {
+
+		//Mitch: make sure number of bytes to read does not exceed buffer size
+		if (status.cbInQue > nbChar) {
+			toRead = nbChar;
+		} else {
+			toRead = status.cbInQue;
+		}
+
+		//Mitch: try to read bytes from hardware, put into into temporary buffer
+		if (ReadFile(hSerial, (LPVOID)buffer, toRead, (LPDWORD)(&bytesRead), NULL) != 0) {
+
+			//Mitch: for debugging, can ignore this
+			//UE_LOG(LogTemp, Warning, TEXT("%s\n"), ANSI_TO_TCHAR(buffer));
+
+			//Mitch: push bytes from temporary buffer into control buffer
+			for (DWORD32 i = 0; i < bytesRead; i++) {
+				controlBuffer[controlBufferPos] = buffer[i];
+				controlBufferPos++;
+
+				//Mitch: when semi-colon is found, parse entire input command
+				if (buffer[i] == ';') {
+					UE_LOG(LogTemp, Warning, TEXT("Arduino input: %s\n"), ANSI_TO_TCHAR(controlBuffer));
+
+					//Mitch: initialized input variables, may be a problem later on
+					int buttonR=0, buttonL=0, encoderR=0, encoderF=0, encoderL=0;
+
+					//Mitch: format string "button,encoderR,encoderL;" should be read
+					sscanf(controlBuffer, "%d,%d,%d,%d,%d;", &buttonR, &buttonL, &encoderR, &encoderF, &encoderL);
+
+					//Mitch: set rightFire to buttonR value (similar to holding right mouse button)
+					//rightFire = buttonR ? 1 : 0;
+					if (buttonR) {
+						RightFire();
+					}
+					else {
+						StopRightFire();
+					}
+
+					//Mitch: set leftFire to buttonL value (similar to holding left mouse button)
+					leftFire = buttonL ? 1 : 0;
+
+					//Mitch: set thrusterR to scaled down encoderR value
+					float tthrustR = (float)encoderR / 10.f;
+					if (tthrustR < 0.f) tthrustR = 0.f;
+					if (tthrustR > 3.f) tthrustR = 3.f;
+					thrusterR = tthrustR;
+
+					//Mitch: set thrusterF to scaled down encoderF value
+					float tthrustF = (float)encoderF / 10.f;
+					if (tthrustF < 0.f) tthrustF = 0.f;
+					if (tthrustF > 3.f) tthrustF = 3.f;
+					thrusterF = tthrustF;
+
+					//Mitch: set thrusterL to scaled down encoderL value
+					float tthrustL = (float)encoderL / 10.f;
+					if (tthrustL < 0.f) tthrustL = 0.f;
+					if (tthrustL > 3.f) tthrustL = 3.f;
+					thrusterL = tthrustL;
+
+					//Mitch: for debugging, can ignore this
+					//UE_LOG(LogTemp, Warning, TEXT("button = %d\n"), button);
+					//UE_LOG(LogTemp, Warning, TEXT("encoderL = %d encoderR = %d\n"), encoderL, encoderR);
+
+					//Mitch: clear control buffer after successfully reading command, prepare for new input
+					for (unsigned int i = 0; i < controlBufferPos; i++) controlBuffer[i] = '\0';
+					controlBufferPos = 0;
+				}
+			}
+
+		}
+	}
+
+	//Mitch: ---END OF HARDWARE BLOCK--
 }
 
 float ABattleChairsCharacter::min(float a, float b, float c) {

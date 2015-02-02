@@ -22,12 +22,33 @@ public:
 	int rightFireDelay;
 	int leftFireDelay;
 
+
+	float firerate;
+	float knockback;
+	float turnrate;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterF)
 	float thrusterF;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterL)
 	float thrusterL;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterR)
 	float thrusterR;
 	float lift;
 
+	float rotationalVelocity;
+	float rotationalDrag;
+
+	//Mitch: these variables are for hardware communication
+	HANDLE hSerial;
+	COMSTAT status;
+	DWORD32 errors;
+	bool connected = false;
+	char controlBuffer[100];
+	unsigned int controlBufferPos = 0;
+
 	ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer);
+
+	//Mitch: destructor disconnects from hardware
+	~ABattleChairsCharacter();
 
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
@@ -94,7 +115,7 @@ protected:
 	void ThrusterLDown();
 	void ThrusterRUp();
 	void ThrusterRDown();
-
+	bool ThrusterFON();
 	/**
 	 * Called via input to turn at a given rate.
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
