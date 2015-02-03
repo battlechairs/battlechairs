@@ -53,12 +53,12 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	GunOffset = FVector(0.0f, 0.0f, 0.0f);
 
 	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
-	Mesh1P->AttachParent = FirstPersonCameraComponent;
-	Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
+	//Mesh1P = ObjectInitializer.CreateDefaultSubobject<USkeletalMeshComponent>(this, TEXT("CharacterMesh1P"));
+	//Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
+	//Mesh1P->AttachParent = FirstPersonCameraComponent;
+	//Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
+	//Mesh1P->bCastDynamicShadow = false;
+	//Mesh1P->CastShadow = false;
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P are set in the
 	// derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -180,9 +180,9 @@ void ABattleChairsCharacter::LeftFire()
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
-		const FRotator SpawnRotation = chairDirection; //GetControlRotation();
+		const FRotator SpawnRotation = FRotator(0, chairDirection.Yaw, 0); //GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-		FVector offSet = FVector(0.0f, -150.0f, 0.0f);
+		FVector offSet = FVector(0.0f, -180.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
 			//turn.Add(0.0f, 3.0f, 0.0f);
@@ -192,7 +192,7 @@ void ABattleChairsCharacter::LeftFire()
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
-		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
+		FVector testGunOffset = FVector(175.0f, 85.0f, 20.0f); //(150.0f, 75.0f, 35.0f);
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(testGunOffset) + SpawnRotation.RotateVector(offSet);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
@@ -202,7 +202,7 @@ void ABattleChairsCharacter::LeftFire()
 			//World->SpawnActor<AProjectileParent>(BulletClass, SpawnLocation, SpawnRotation);
 		}
 
-		ClientSetRotation(SpawnRotation - turn);
+		//ClientSetRotation(SpawnRotation - turn);
 		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		leftFire = true;
 	}
@@ -276,7 +276,7 @@ void ABattleChairsCharacter::RightFire()
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
-		const FRotator SpawnRotation = chairDirection; //GetControlRotation();
+		const FRotator SpawnRotation = FRotator(0, chairDirection.Yaw, 0);//GetController()->GetControlRotation();//chairDirection; //GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
@@ -288,7 +288,7 @@ void ABattleChairsCharacter::RightFire()
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
-		FVector testGunOffset = FVector(150.0f, 75.0f, 35.0f);
+		FVector testGunOffset = FVector(175.0f, 85.0f, 20.0f);
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(testGunOffset);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
@@ -297,7 +297,7 @@ void ABattleChairsCharacter::RightFire()
 			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
 		}
 
-		ClientSetRotation(SpawnRotation - turn);
+		//ClientSetRotation(SpawnRotation - turn);
 		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		rightFire = true;
 	}
@@ -510,7 +510,7 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 
 	lift = min(thrusterF, thrusterL, thrusterR);
 	if (lift > .4) {
-		lift = 25 + sqrt(lift * 100) - (GetActorLocation().Z)/120;
+		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z)/120;
 		FVector up = FVector(0, 0, lift);
 		LaunchCharacter(up, false, false);
 	}
