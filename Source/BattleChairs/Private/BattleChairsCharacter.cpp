@@ -40,6 +40,8 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	rotationalVelocity = 0.f;
 	rotationalDrag = 1.1f;
 
+	chairDirection = FRotator();
+
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
@@ -178,7 +180,7 @@ void ABattleChairsCharacter::LeftFire()
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
-		const FRotator SpawnRotation = GetControlRotation();
+		const FRotator SpawnRotation = chairDirection; //GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		FVector offSet = FVector(0.0f, -150.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
@@ -274,7 +276,7 @@ void ABattleChairsCharacter::RightFire()
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
-		const FRotator SpawnRotation = GetControlRotation();
+		const FRotator SpawnRotation = chairDirection; //GetControlRotation();
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
@@ -455,6 +457,18 @@ void ABattleChairsCharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
+void ABattleChairsCharacter::AddControllerPitchInput(float val)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("AddControllerPitchInput called with %f"), val);
+	FirstPersonCameraComponent->AddRelativeRotation(FRotator(-val * BaseTurnRate * GetWorld()->GetDeltaSeconds(), 0.f, 0.f));
+}
+
+void ABattleChairsCharacter::AddControllerYawInput(float val)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("AddControllerYawInput called with %f"), val);
+	FirstPersonCameraComponent->AddRelativeRotation(FRotator(0.f, +val * BaseTurnRate * GetWorld()->GetDeltaSeconds(), 0.f));
+}
+
 void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
 	if (leftFire) {
@@ -479,8 +493,9 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		turn.Add(0.f, rotationalVelocity, 0.f);
 		rotationalVelocity /= rotationalDrag;
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
-		ClientSetRotation(SpawnRotation - turn);
+		chairDirection = SpawnRotation - turn;
 	}
+	ClientSetRotation(chairDirection);
 
 	FRotator LeftThrusterOffSet = FRotator(0.0);
 	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);

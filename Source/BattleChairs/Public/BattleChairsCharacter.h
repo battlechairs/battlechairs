@@ -39,6 +39,8 @@ public:
 	float rotationalVelocity;
 	float rotationalDrag;
 
+	FRotator chairDirection;
+
 	//Mitch: these variables are for hardware communication
 	HANDLE hSerial;
 	COMSTAT status;
@@ -129,6 +131,9 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
+
+	void AddControllerPitchInput(float val);
+	void AddControllerYawInput(float val);
 
 	float min(float a, float b, float c);
 
