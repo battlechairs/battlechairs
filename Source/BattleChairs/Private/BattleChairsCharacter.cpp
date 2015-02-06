@@ -57,8 +57,8 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	//Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
 	//Mesh1P->AttachParent = FirstPersonCameraComponent;
 	//Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
-	//Mesh1P->bCastDynamicShadow = false;
-	//Mesh1P->CastShadow = false;
+	//Mesh1P->bCastDynamicShadow = true;
+	//Mesh1P->CastShadow = true;
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P are set in the
 	// derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -486,16 +486,17 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		}
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
-
+	FRotator turn = FRotator(0.0);
 	if (abs(rotationalVelocity) > 0.0001f) {
 		const FRotator SpawnRotation = GetControlRotation();
-		FRotator turn = FRotator(0.0);
+		turn = FRotator(0.0);
 		turn.Add(0.f, rotationalVelocity, 0.f);
 		rotationalVelocity /= rotationalDrag;
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
-		chairDirection = SpawnRotation - turn;
+		//chairDirection = GetActorRotation() - turn;
 	}
-	ClientSetRotation(chairDirection);
+	
+	ClientSetRotation(GetActorRotation()-turn);
 
 	FRotator LeftThrusterOffSet = FRotator(0.0);
 	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);
