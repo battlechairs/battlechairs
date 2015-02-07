@@ -27,7 +27,7 @@ ABattleChairsHUD::ABattleChairsHUD(const class FObjectInitializer& PCIP) : Super
 	static ConstructorHelpers::FObjectFinder<UTexture2D> ThrusterTest(TEXT("/Game/Textures/Yellow"));
 	thrusterTest = ThrusterTest.Object;
 }
-
+/*
 int32 health1 = 300;
 int32 thrusterl = 0;
 int32 thrusterr = 0;
@@ -38,10 +38,12 @@ float getThrusterR = 0;
 float frontThruster;
 float leftThruster;
 float rightThruster;
+*/
 
 void ABattleChairsHUD::DrawHUD()
 {
 	Super::DrawHUD();
+	/*
 	float ScaleUI = Canvas->ClipY / Canvas->ClipX;
 	ABattleChairsCharacter* MyPawn = Cast<ABattleChairsCharacter>(GetOwningPawn());
 	if (MyPawn)
@@ -50,7 +52,7 @@ void ABattleChairsHUD::DrawHUD()
 		getThrusterL = MyPawn->thrusterL;
 		getThrusterR = MyPawn->thrusterR;
 		health1 = MyPawn->PlayerHealth; 
-		UE_LOG(YourLog, Warning, TEXT("original front thruster value is %f"), getThrusterF);
+		//UE_LOG(YourLog, Warning, TEXT("original front thruster value is %f"), getThrusterF);
 	}
 	
 	// find center of the Canvas
@@ -72,7 +74,6 @@ void ABattleChairsHUD::DrawHUD()
 	TileItem.BlendMode = SE_BLEND_Translucent;
 	Canvas->DrawItem(TileItem);
 
-	/* Left Thruster Bar*/
 
 	//new way of drawing the thruster bars
 	FCanvasTileItem LeftThrusterBar(ThrusterLPosition, ThrusterLTexture->Resource, FLinearColor::White);
@@ -92,10 +93,8 @@ void ABattleChairsHUD::DrawHUD()
 		leftThruster *= 150;
 	}
 
-	/* End of left thruster code*/
 
 
-	/* Right Thruster Bar */
 
 	FCanvasTileItem RightThrusterBar(ThrusterRPosition, ThrusterRTexture->Resource, FLinearColor::White);
 	RightThrusterBar.BlendMode = SE_BLEND_Translucent;
@@ -114,9 +113,6 @@ void ABattleChairsHUD::DrawHUD()
 		rightThruster *= 150;
 	}
 
-	/* End of right thruster code*/
-
-	/* Front Thruster Bar */
 	FCanvasTileItem FrontThrusterBar(ThrusterFPosition, ThrusterFTexture->Resource, FLinearColor::White);
 	FrontThrusterBar.BlendMode = SE_BLEND_Translucent;
 	//Rotate the item 270 degrees so it goes left to right on the top of the screen 
@@ -133,12 +129,9 @@ void ABattleChairsHUD::DrawHUD()
 	if (GetAsyncKeyState(0x54) != 0 || GetAsyncKeyState(0x47) != 0){
 		frontThruster = getThrusterF;
 		frontThruster *= 150;
-		UE_LOG(YourLog, Warning, TEXT("front thruster after 'T' is %f"), frontThruster);
+		//UE_LOG(YourLog, Warning, TEXT("front thruster after 'T' is %f"), frontThruster);
 	}
 
-
-	/* End of left thruster code*/
-	
 
 	//update the left thruster item
 	LeftThrusterBar.Size.Y = leftThruster * 1;
@@ -154,11 +147,13 @@ void ABattleChairsHUD::DrawHUD()
 
 	//call the draw health bar function
 	drawHealthBar();
+	*/
 }
 
 //function to create the health bar
 void ABattleChairsHUD::drawHealthBar()
 {
+	/*
 	//Get scale for the UI
 	float ScaleUI = Canvas->ClipY / Canvas->ClipX;
 	//Make the health bar icon and draw it in the top left of the screen
@@ -166,5 +161,6 @@ void ABattleChairsHUD::drawHealthBar()
 	if (length <= 0) length = 0;
 	FCanvasIcon HealthBarIcon = UCanvas::MakeIcon(HealthBarTexture, 0, 0, length, 20);
 	Canvas->DrawIcon(HealthBarIcon, 10, 20, ScaleUI);
+	*/
 }
 

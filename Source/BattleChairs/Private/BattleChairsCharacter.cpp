@@ -32,6 +32,9 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	thrusterF = 0;
 	thrusterL = 0;
 	thrusterR = 0;
+	thrusterFV = FVector(0);
+	thrusterLV = FVector(0);
+	thrusterRV = FVector(0);
 	lift = 0;
 	firerate = 5;
 	knockback = -100;
@@ -57,8 +60,8 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	//Mesh1P->SetOnlyOwnerSee(false);			// only the owning player will see this mesh
 	//Mesh1P->AttachParent = FirstPersonCameraComponent;
 	//Mesh1P->RelativeLocation = FVector(0.f, 0.f, -150.f);
-	//Mesh1P->bCastDynamicShadow = true;
-	//Mesh1P->CastShadow = true;
+	//Mesh1P->bCastDynamicShadow = false;
+	//Mesh1P->CastShadow = false;
 
 	// Note: The ProjectileClass and the skeletal mesh/anim blueprints for Mesh1P are set in the
 	// derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -186,7 +189,7 @@ void ABattleChairsCharacter::LeftFire()
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
 			//turn.Add(0.0f, 3.0f, 0.0f);
-			rotationalVelocity += +3.f;
+			rotationalVelocity += 1.f;
 		}
 		else {
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
@@ -276,13 +279,12 @@ void ABattleChairsCharacter::RightFire()
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
 	{
-		const FRotator SpawnRotation = FRotator(0, chairDirection.Yaw, 0);//GetController()->GetControlRotation();//chairDirection; //GetControlRotation();
+		const FRotator SpawnRotation = FRotator(0, chairDirection.Yaw, 0);
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
-		//FVector offSet = FVector(0.0f, -60.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 		if (leftFire == false){
 			//turn.Add(0.0f, -3.0f, 0.0f);
-			rotationalVelocity += -3.f;
+			rotationalVelocity += -1.f;
 		}
 		else {
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
@@ -301,25 +303,7 @@ void ABattleChairsCharacter::RightFire()
 		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		rightFire = true;
 	}
-	/*
-	// try and play the sound if specified
-	if (FireSound != NULL)
-	{
-	UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
-	}
-	*/
-	/*
-	// try and play a firing animation if specified
-	if(FireAnimation != NULL)
-	{
-	// Get the animation object for the arms mesh
-	UAnimInstance* AnimInstance = Mesh1P->GetAnimInstance();
-	if(AnimInstance != NULL)
-	{
-	AnimInstance->Montage_Play(FireAnimation, 1.f);
-	}
-	}
-	*/
+
 }
 /* Validation */
 bool ABattleChairsCharacter::Server_AttemptStopRightFire_Validate()
@@ -411,39 +395,6 @@ bool ABattleChairsCharacter::ThrusterFON()
 	return (thrusterF > 0);
 }
 
-/*
-void ABattleChairsCharacter::ThrusterF(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		UE_LOG(LogTemp, Warning, TEXT("thrusterF"));
-		if (thrusterF <= 3 && Value >= 0) thrusterF += 0.1;
-		if (thrusterF < 0) thrusterF = 0;
-	}
-	
-}
-
-void ABattleChairsCharacter::ThrusterL(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		if (thrusterL <= 3) thrusterL += 0.1;
-		if (thrusterL <= 0) thrusterL = 0;
-	}
-}
-
-void ABattleChairsCharacter::ThrusterR(float Value)
-{
-	if (Value != 0.0f)
-	{
-		// add movement in that direction
-		if (thrusterR <= 3) thrusterR += 0.1;
-		if (thrusterR <= 0) thrusterR = 0;
-	}
-}
-*/
 
 void ABattleChairsCharacter::TurnAtRate(float Rate)
 {
@@ -469,6 +420,10 @@ void ABattleChairsCharacter::AddControllerYawInput(float val)
 	FirstPersonCameraComponent->AddRelativeRotation(FRotator(0.f, +val * BaseTurnRate * GetWorld()->GetDeltaSeconds(), 0.f));
 }
 
+void ABattleChairsCharacter::SetCameraRotation(const FRotator& rot) {
+	FirstPersonCameraComponent->SetRelativeRotation(rot);
+}
+
 void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
 	if (leftFire) {
@@ -488,15 +443,21 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
 	FRotator turn = FRotator(0.0);
 	if (abs(rotationalVelocity) > 0.0001f) {
+		if (rotationalVelocity < -2) {
+			rotationalVelocity = -2;
+		}
+		else if (rotationalVelocity > 2) {
+			rotationalVelocity = 2;
+		}
+		
 		const FRotator SpawnRotation = GetControlRotation();
-		turn = FRotator(0.0);
+		//FRotator turn = FRotator(0.0);
 		turn.Add(0.f, rotationalVelocity, 0.f);
 		rotationalVelocity /= rotationalDrag;
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
-		//chairDirection = GetActorRotation() - turn;
+		chairDirection = SpawnRotation - turn;
 	}
-	
-	ClientSetRotation(GetActorRotation()-turn);
+	ClientSetRotation(GetActorRotation() - turn);
 
 	FRotator LeftThrusterOffSet = FRotator(0.0);
 	LeftThrusterOffSet.Add(0.0f, 45.0f, 0.0f);
@@ -510,6 +471,10 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	AddMovementInput(RightThrusterDir, thrusterR);
 
 	lift = min(thrusterF, thrusterL, thrusterR);
+	SpawnRate = (ceil(lift * 4));
+	thrusterFV = FVector(0, 0, thrusterF * -300);
+	thrusterLV = FVector(0, 0, thrusterL * -300);
+	thrusterRV = FVector(0, 0, thrusterR * -300);
 	if (lift > .4) {
 		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z)/120;
 		FVector up = FVector(0, 0, lift);

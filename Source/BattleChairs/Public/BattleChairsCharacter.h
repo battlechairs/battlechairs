@@ -34,6 +34,16 @@ public:
 	float thrusterL;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterR)
 	float thrusterR;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterF)
+	FVector thrusterFV;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterL)
+	FVector thrusterLV;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterR)
+	FVector thrusterRV;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = thrusterF)
+	float SpawnRate;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+	AActor* WeaponType;
 	float lift;
 
 	float rotationalVelocity;
@@ -149,5 +159,7 @@ public:
 	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+	void SetCameraRotation(const FRotator& rot);
 };
 

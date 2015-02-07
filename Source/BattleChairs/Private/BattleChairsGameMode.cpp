@@ -4,6 +4,7 @@
 #include "BattleChairsGameMode.h"
 #include "BattleChairsHUD.h"
 #include "BattleChairsCharacter.h"
+//#include "BattleChairsPlayerController.h"
 
 ABattleChairsGameMode::ABattleChairsGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -11,6 +12,7 @@ ABattleChairsGameMode::ABattleChairsGameMode(const FObjectInitializer& ObjectIni
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/Blueprints/MyCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
+	//PlayerControllerClass = ABattleChairsPlayerController::StaticClass();
 
 	// use our custom HUD class
 	HUDClass = ABattleChairsHUD::StaticClass();
