@@ -475,11 +475,15 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	thrusterFV = FVector(0, 0, thrusterF * -300);
 	thrusterLV = FVector(0, 0, thrusterL * -300);
 	thrusterRV = FVector(0, 0, thrusterR * -300);
+	/*
 	if (lift > .4) {
 		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z)/120;
 		FVector up = FVector(0, 0, lift);
 		LaunchCharacter(up, false, false);
 	}
+	*/
+	Server_AttemptLift();
+
 	//Mitch: ---START OF HARDWARE BLOCK--
 
 	//Mitch: temporary variables to read from hardware
@@ -570,6 +574,34 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 
 	//Mitch: ---END OF HARDWARE BLOCK--
 }
+
+bool ABattleChairsCharacter::Server_AttemptLift_Validate()
+{
+	return true; //We can insert code here to test if they are fly
+}
+
+
+void ABattleChairsCharacter::Server_AttemptLift_Implementation()
+{
+	if (Role == ROLE_Authority)
+	{
+		LiftPlayer();
+	}
+}
+
+
+
+void ABattleChairsCharacter::LiftPlayer()
+{
+	if (lift > .4) 
+	{
+		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z) / 120;
+		FVector up = FVector(0, 0, lift);
+		LaunchCharacter(up, true, true);
+		
+	}
+}
+
 
 float ABattleChairsCharacter::min(float a, float b, float c) {
 	if (a < b && a < c) return a;
