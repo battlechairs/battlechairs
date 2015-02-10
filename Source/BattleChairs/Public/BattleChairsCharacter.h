@@ -164,6 +164,6 @@ public:
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
-	void SetCameraRotation(const FRotator& rot);
+	void UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition);
 };
 

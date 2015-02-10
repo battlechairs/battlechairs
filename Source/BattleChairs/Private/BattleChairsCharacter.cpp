@@ -420,8 +420,9 @@ void ABattleChairsCharacter::AddControllerYawInput(float val)
 	FirstPersonCameraComponent->AddRelativeRotation(FRotator(0.f, +val * BaseTurnRate * GetWorld()->GetDeltaSeconds(), 0.f));
 }
 
-void ABattleChairsCharacter::SetCameraRotation(const FRotator& rot) {
-	FirstPersonCameraComponent->SetRelativeRotation(rot);
+void ABattleChairsCharacter::UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition) {
+	FVector newPosition = FVector(0.f, 0.f, 96.f) - chairDirection.operator-().RotateVector(viewPosition) + viewPosition;
+	FirstPersonCameraComponent->SetRelativeLocationAndRotation(newPosition, viewRotation);
 }
 
 void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
