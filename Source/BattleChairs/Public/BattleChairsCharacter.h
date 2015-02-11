@@ -9,8 +9,8 @@ class ABattleChairsCharacter : public ACharacter
 	GENERATED_BODY()
 
 	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleAnywhere, Category=Mesh)
-	class USkeletalMeshComponent* Mesh1P;
+	//UPROPERTY(VisibleAnywhere, Category=Mesh)
+	//class USkeletalMeshComponent* Mesh1P;
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -113,7 +113,11 @@ protected:
 		void Server_AttemptStopRightFire();
 	void StopRightFire();
 
-	
+	/** Makes the character can fly */
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_AttemptLift();
+	void LiftPlayer();
+
 	/** Handler for a touch input beginning. */
 	void TouchStarted(const ETouchIndex::Type FingerIndex, const FVector Location);
 
@@ -156,10 +160,10 @@ protected:
 
 public:
 	/** Returns Mesh1P subobject **/
-	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
+	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
-	void SetCameraRotation(const FRotator& rot);
+	void UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition);
 };
 
