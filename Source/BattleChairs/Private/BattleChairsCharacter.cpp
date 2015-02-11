@@ -490,7 +490,10 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		//LaunchCharacter(up, true, true);
 		//SetActorLocationEverywhere(GetActorLocation() + up, false, nullptr);
 	}
-
+	else {
+		//AddMovementInput(GetActorUpVector(), -lift);
+	}
+	AddMovementInput(GetActorUpVector(), -.5);
 	//GetMesh()->SetPhysicsLinearVelocity(upThrusterDir, true, NAME_None);
 	
 
