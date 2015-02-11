@@ -471,38 +471,26 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	AddMovementInput(RightThrusterDir, thrusterR);
 
 	
-
-	lift = min(thrusterF, thrusterL, thrusterR);
+	
+	//lift = min(thrusterF, thrusterL, thrusterR);
+	lift = (thrusterF + thrusterL + thrusterR) / 3.0;
 	SpawnRate = (ceil(lift * 4));
 	thrusterFV = FVector(0, 0, thrusterF * -300);
 	thrusterLV = FVector(0, 0, thrusterL * -300);
 	thrusterRV = FVector(0, 0, thrusterR * -300);
 	
-	//test flight
-	FRotator upThrusterOffSet = FRotator(90.0, 0.0, 90.0);
-	//upThrusterOffSet.Add(90.0f, 0.0f, 0.0f);
-	FVector upThrusterDir = upThrusterOffSet.RotateVector(GetActorForwardVector());
+	/*
 	if (lift > .4)
 	{
 		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z) / 120;
 		FVector up = FVector(0, 0, lift);
 		AddMovementInput(GetActorUpVector(), lift);
-		//LaunchCharacter(up, true, true);
-		//SetActorLocationEverywhere(GetActorLocation() + up, false, nullptr);
 	}
-	else {
-		//AddMovementInput(GetActorUpVector(), -lift);
-	}
-	AddMovementInput(GetActorUpVector(), -.5);
-	//GetMesh()->SetPhysicsLinearVelocity(upThrusterDir, true, NAME_None);
-	
+	*/
 
-	/*if (lift > .4) {
-		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z)/120;
-		FVector up = FVector(0, 0, lift);
-		LaunchCharacter(up, false, false);
-	}*/
-	Server_AttemptLift();
+	AddMovementInput(GetActorUpVector(), lift - 1.0);
+
+	//Server_AttemptLift();
 
 	//Mitch: ---START OF HARDWARE BLOCK--
 
@@ -595,6 +583,7 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	//Mitch: ---END OF HARDWARE BLOCK--
 }
 
+/*
 bool ABattleChairsCharacter::Server_AttemptLift_Validate()
 {
 	return true; //We can insert code here to test if they are fly
@@ -614,6 +603,7 @@ void ABattleChairsCharacter::Server_AttemptLift_Implementation()
 		}
 	}
 }
+*/
 
 /*
 void ABattleChairsCharacter::LiftPlayer()

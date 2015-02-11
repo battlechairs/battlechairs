@@ -114,8 +114,8 @@ protected:
 	void StopRightFire();
 
 	/** Makes the character can fly */
-	UFUNCTION(NetMulticast, Reliable, WithValidation)
-		void Server_AttemptLift();
+	//UFUNCTION(NetMulticast, Reliable, WithValidation)
+		//void Server_AttemptLift();
 	//void LiftPlayer();
 
 	/** Handler for a touch input beginning. */
