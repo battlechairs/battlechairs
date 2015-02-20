@@ -364,6 +364,7 @@ void ABattleChairsCharacter::ThrusterFDown()
 {
 	UE_LOG(LogTemp, Warning, TEXT("thrusterFDown"));
 	if (thrusterF >= .1f) thrusterF -= 0.1f;
+	if (thrusterF > .09f && thrusterF < 0.2f) thrusterF = 0.f;
 }
 
 void ABattleChairsCharacter::ThrusterLUp()
@@ -376,6 +377,7 @@ void ABattleChairsCharacter::ThrusterLDown()
 {
 	UE_LOG(LogTemp, Warning, TEXT("thrusterLDown"));
 	if (thrusterL >= 0.1) thrusterL -= 0.1f;
+	if (thrusterL > .09f && thrusterL < 0.2f) thrusterL = 0.f;
 }
 
 void ABattleChairsCharacter::ThrusterRUp()
@@ -388,6 +390,7 @@ void ABattleChairsCharacter::ThrusterRDown()
 {
 	UE_LOG(LogTemp, Warning, TEXT("thrusterRDown"));
 	if (thrusterR >= 0.1) thrusterR -= 0.1f;
+	if (thrusterR > .09f && thrusterR < 0.2f) thrusterR = 0.f;
 }
 
 bool ABattleChairsCharacter::ThrusterFON()
