@@ -25,6 +25,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
 		float PlayerHealth;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float firerate;
 	float knockback;
 	float turnrate;
