@@ -18,7 +18,7 @@ void ABattleChairsPlayerController::UpdateRotation(float DeltaTime)
 
 	if (PlayerCameraManager)
 	{
-		PlayerCameraManager->ProcessViewRotation(DeltaTime, NewControlRotation, DeltaRot);
+		//PlayerCameraManager->ProcessViewRotation(DeltaTime, NewControlRotation, DeltaRot);
 	}
 
 	//SetControlRotation(NewControlRotation);
@@ -38,12 +38,12 @@ void ABattleChairsPlayerController::UpdateRotation(float DeltaTime)
 			// Only keep the yaw component from the controller.
 			//NewViewRotation.Yaw += NewControlRotation.Yaw;
 
-			SetViewRotation(NewViewRotation);
+			//SetViewRotation(NewViewRotation);
 
 			ABattleChairsCharacter* MYC = Cast<ABattleChairsCharacter>(GetPawnOrSpectator());
 			if (MYC)
 			{
-				MYC->UpdateOculusCamera(ViewRotation, HMDPosition);
+				//MYC->UpdateOculusCamera(ViewRotation, HMDPosition);
 			}
 
 		}
@@ -57,7 +57,7 @@ void ABattleChairsPlayerController::SetControlRotation(const FRotator& NewRotati
 
 	// Anything that is overriding view rotation will need to 
 	// call SetViewRotation() after SetControlRotation().
-	SetViewRotation(NewRotation);
+	//SetViewRotation(NewRotation);
 
 	if (RootComponent && RootComponent->bAbsoluteRotation)
 	{
