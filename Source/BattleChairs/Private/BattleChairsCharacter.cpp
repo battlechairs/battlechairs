@@ -43,7 +43,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	rotationalVelocity = 0.f;
 	rotationalDrag = 1.1f;
 
-	chairDirection = FRotator();
+	chairDirection = GetActorRotation();
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
@@ -460,6 +460,7 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 		rotationalVelocity /= rotationalDrag;
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		chairDirection = SpawnRotation - turn;
+		AddActorLocalRotation(chairDirection - SpawnRotation);
 	}
 	ClientSetRotation(GetActorRotation() - turn);
 
