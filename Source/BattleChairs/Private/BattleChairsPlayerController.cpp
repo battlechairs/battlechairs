@@ -38,12 +38,12 @@ void ABattleChairsPlayerController::UpdateRotation(float DeltaTime)
 			// Only keep the yaw component from the controller.
 			//NewViewRotation.Yaw += NewControlRotation.Yaw;
 
-			//SetViewRotation(NewViewRotation);
+			SetViewRotation(NewViewRotation);
 
 			ABattleChairsCharacter* MYC = Cast<ABattleChairsCharacter>(GetPawnOrSpectator());
 			if (MYC)
 			{
-				//MYC->UpdateOculusCamera(ViewRotation, HMDPosition);
+				MYC->UpdateOculusCamera(ViewRotation, HMDPosition);
 			}
 
 		}
