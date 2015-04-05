@@ -413,14 +413,18 @@ void ABattleChairsCharacter::LookUpAtRate(float Rate)
 
 void ABattleChairsCharacter::AddControllerPitchInput(float val)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("AddControllerPitchInput called with %f"), val);
-	FirstPersonCameraComponent->AddRelativeRotation(FRotator(-val * BaseTurnRate * GetWorld()->GetDeltaSeconds(), 0.f, 0.f));
+	// use quaternions to rotate camera
+	FQuat oldRotation = FirstPersonCameraComponent->GetRelativeTransform().GetRotation();
+	FQuat deltaRotation = FQuat(oldRotation.GetAxisY(), val/50.f * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+	FirstPersonCameraComponent->SetRelativeRotation(FRotator(deltaRotation * oldRotation));
 }
 
 void ABattleChairsCharacter::AddControllerYawInput(float val)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("AddControllerYawInput called with %f"), val);
-	FirstPersonCameraComponent->AddRelativeRotation(FRotator(0.f, +val * BaseTurnRate * GetWorld()->GetDeltaSeconds(), 0.f));
+	// use quaternions to rotate camera
+	FQuat oldRotation = FirstPersonCameraComponent->GetRelativeTransform().GetRotation();
+	FQuat deltaRotation = FQuat(FVector(0.f, 0.f, 1.f), val/50.f * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	FirstPersonCameraComponent->SetRelativeRotation(FRotator(deltaRotation * oldRotation));
 }
 
 void ABattleChairsCharacter::UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition) {
