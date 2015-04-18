@@ -1,38 +1,47 @@
 // Input Reader
 //  Arduino code to read changes from two buttons and three digital encoders
 
-// variables for top encoder (encoderR in Unreal)
-int encoderTopPos = 0;
+// event enumerations
+const int ENCODER_TOP_UP = 0x001;
+const int ENCODER_TOP_DOWN = 0x002;
+const int BUTTON_TOP_UP = 0x004;
+const int BUTTON_TOP_DOWN = 0x008;
+const int ENCODER_MIDDLE_UP = 0x010;
+const int ENCODER_MIDDLE_DOWN = 0x020;
+const int BUTTON_BOTTOM_UP = 0x040;
+const int BUTTON_BOTTOM_DOWN = 0x080;
+const int ENCODER_BOTTOM_UP = 0x100;
+const int ENCODER_BOTTOM_DOWN = 0x200;
+
+// state for top encoder (encoderR in Unreal)
 int encoderTopPinALast = LOW;
 
-// variables for top button (buttonR in Unreal)
-int buttonTopState = LOW;
+// state for top button (buttonR in Unreal)
+int buttonTopPinLast = LOW;
 
-// variables for middle encoder (encoderF in Unreal)
-int encoderMidPos = 0;
-int encoderMidPinALast = LOW;
+// state for middle encoder (encoderF in Unreal)
+int encoderMiddlePinALast = LOW;
 
-// variables for bottom button (buttonL in Unreal)
-int buttonBotState = LOW;
+// state for bottom button (buttonL in Unreal)
+int buttonBottomPinLast = LOW;
 
-// variables for bottom encoder (encoderL in Unreal)
-int encoderBotPos = 0;
-int encoderBotPinALast = LOW;
+// state for bottom encoder (encoderL in Unreal)
+int encoderBottomPinALast = LOW;
 
 // layout of pins on board
 int encoderTopPinA = 11;
 int encoderTopPinB = 10;
 int buttonTopPin = 9;
-int encoderMidPinA = 8;
+int encoderMiddlePinA = 8;
 // board divide here
-int encoderMidPinB = 7;
-int buttonBotPin = 6;
-int encoderBotPinA = 5;
-int encoderBotPinB = 4;
+int encoderMiddlePinB = 7;
+int buttonBottomPin = 6;
+int encoderBottomPinA = 5;
+int encoderBottomPinB = 4;
 
 // other global variables
 int readValue = LOW;
-int hasChanged = 0;
+int event = 0;
 
 void setup() {
     // setup two pins to read from top encoder
@@ -43,89 +52,83 @@ void setup() {
     pinMode(buttonTopPin, INPUT);
 
     // setup two pins to read from middle encoder
-    pinMode(encoderMidPinA, INPUT);
-    pinMode(encoderMidPinB, INPUT);
+    pinMode(encoderMiddlePinA, INPUT);
+    pinMode(encoderMiddlePinB, INPUT);
 
     // setup one pin to read from bottom button
-    pinMode(buttonBotPin, INPUT);
+    pinMode(buttonBottomPin, INPUT);
 
     // setup two pins to read from bottom encoder
-    pinMode(encoderBotPinA, INPUT);
-    pinMode(encoderBotPinB, INPUT);
+    pinMode(encoderBottomPinA, INPUT);
+    pinMode(encoderBottomPinB, INPUT);
 
     // setup serial port printing (bitrate must match Unreal bitrate)
     Serial.begin(9600);
 }
 
 void loop() {
-    // assume this loop has no updates
-    hasChanged = 0;
+    // assume this loop has no events
+    event = 0;
 
-    // check for updates in top encoder position
+    // check for events in top encoder position
     readValue = digitalRead(encoderTopPinA);
     if ((encoderTopPinALast == LOW) && (readValue == HIGH)) {
         if (digitalRead(encoderTopPinB) == LOW) {
-            encoderTopPos--;
+            event |= ENCODER_TOP_DOWN;
         }
         else {
-            encoderTopPos++;
+            event |= ENCODER_TOP_UP;
         }
-        hasChanged = 1;
     } 
     encoderTopPinALast = readValue;
 
-    // check for updates in top button press state
+    // check for events in top button press state
     readValue = digitalRead(buttonTopPin);
-    if (buttonTopState != readValue) {
-        buttonTopState = readValue;
-        hasChanged = 1;
+    if (buttonTopPinLast != readValue) {
+        buttonTopPinLast = readValue;
+        if (readValue) event |= BUTTON_TOP_DOWN;
+        else event |= BUTTON_TOP_UP;
     }
 
-    // check for updates in middle encoder position
-    readValue = digitalRead(encoderMidPinA);
-    if ((encoderMidPinALast == LOW) && (readValue == HIGH)) {
-        if (digitalRead(encoderMidPinB) == LOW) {
-            encoderMidPos--;
+    // check for events in middle encoder position
+    readValue = digitalRead(encoderMiddlePinA);
+    if ((encoderMiddlePinALast == LOW) && (readValue == HIGH)) {
+        if (digitalRead(encoderMiddlePinB) == LOW) {
+            event |= ENCODER_MIDDLE_DOWN;
         }
         else {
-            encoderMidPos++;
+            event |= ENCODER_MIDDLE_UP;
         }
-        hasChanged = 1;
     } 
-    encoderMidPinALast = readValue;
+    encoderMiddlePinALast = readValue;
 
-    // check for updates in bottom button press state
-    readValue = digitalRead(buttonBotPin);
-    if (buttonBotState != readValue) {
-        buttonBotState = readValue;
-        hasChanged = 1;
+    // check for events in bottom button press state
+    readValue = digitalRead(buttonBottomPin);
+    if (buttonBottomPinLast != readValue) {
+        buttonBottomPinLast = readValue;
+        if (readValue) event |= BUTTON_BOTTOM_DOWN;
+        else event |= BUTTON_BOTTOM_UP;
     }
 
-    // check for updates in middle encoder position
-    readValue = digitalRead(encoderBotPinA);
-    if ((encoderBotPinALast == LOW) && (readValue == HIGH)) {
-        if (digitalRead(encoderBotPinB) == LOW) {
-            encoderBotPos--;
+    // check for events in middle encoder position
+    readValue = digitalRead(encoderBottomPinA);
+    if ((encoderBottomPinALast == LOW) && (readValue == HIGH)) {
+        if (digitalRead(encoderBottomPinB) == LOW) {
+            event |= ENCODER_BOTTOM_DOWN;
         }
         else {
-            encoderBotPos++;
+            event |= ENCODER_BOTTOM_UP;
         }
-        hasChanged = 1;
     } 
-    encoderBotPinALast = readValue;
+    encoderBottomPinALast = readValue;
 
-    // for updates, write button and encoder states to serial port
-    // format string "buttonR,buttonL,encoderR,encoderF,encoderL;" should be written
-    if (hasChanged) {
-        Serial.print(buttonTopState == HIGH);
-        Serial.print(",");
-        Serial.print(buttonBotState == HIGH);
-        Serial.print(",");
-        Serial.print(encoderTopPos);
-        Serial.print(",");
-        Serial.print(encoderMidPos);
-        Serial.print(",");
-        Serial.print(encoderBotPos);
+    // for any events, write combined event state and a verification hash
+    // format string "event:<event>,hash:<hash>;" should be written
+    if (event) {
+        Serial.print("event:");
+        Serial.print(event);
+        Serial.print(",hash:");
+        Serial.print(event+1);
         Serial.print(";");
     }
 }

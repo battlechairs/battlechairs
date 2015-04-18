@@ -12,8 +12,17 @@
 //////////////////////////////////////////////////////////////////////////
 // ABattleChairsCharacter
 
-
-
+// hardware event enumerations
+#define ENCODER_TOP_UP      0x001
+#define ENCODER_TOP_DOWN    0x002
+#define BUTTON_TOP_UP       0x004
+#define BUTTON_TOP_DOWN     0x008
+#define ENCODER_MIDDLE_UP   0x010
+#define ENCODER_MIDDLE_DOWN 0x020
+#define BUTTON_BOTTOM_UP    0x040
+#define BUTTON_BOTTOM_DOWN  0x080
+#define ENCODER_BOTTOM_UP   0x100
+#define ENCODER_BOTTOM_DOWN 0x200
 
 ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -124,7 +133,7 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	if (!connected) {
 
 		//Mitch: connect to memory-mapped file, I think (might not always be COM6)
-		LPCWSTR portName = L"\\\\.\\COM6";
+		LPCWSTR portName = L"\\\\.\\COM7";
 		hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
 			0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -538,51 +547,7 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 
 				//Mitch: when semi-colon is found, parse entire input command
 				if (buffer[i] == ';') {
-					UE_LOG(LogTemp, Warning, TEXT("Arduino input: %s\n"), ANSI_TO_TCHAR(controlBuffer));
-
-					//Mitch: initialized input variables, may be a problem later on
-					int buttonR=0, buttonL=0, encoderR=0, encoderF=0, encoderL=0;
-
-					//Mitch: format string "button,encoderR,encoderL;" should be read
-					sscanf(controlBuffer, "%d,%d,%d,%d,%d;", &buttonR, &buttonL, &encoderR, &encoderF, &encoderL);
-
-					//Mitch: set rightFire to buttonR value (similar to holding right mouse button)
-					//rightFire = buttonR ? 1 : 0;
-					if (buttonR) {
-						RightFire();
-					}
-					else {
-						StopRightFire();
-					}
-
-					//Mitch: set leftFire to buttonL value (similar to holding left mouse button)
-					leftFire = buttonL ? 1 : 0;
-
-					//Mitch: set thrusterR to scaled down encoderR value
-					float tthrustR = (float)encoderR / 10.f;
-					if (tthrustR < 0.f) tthrustR = 0.f;
-					if (tthrustR > 3.f) tthrustR = 3.f;
-					thrusterR = tthrustR;
-
-					//Mitch: set thrusterF to scaled down encoderF value
-					float tthrustF = (float)encoderF / 10.f;
-					if (tthrustF < 0.f) tthrustF = 0.f;
-					if (tthrustF > 3.f) tthrustF = 3.f;
-					thrusterF = tthrustF;
-
-					//Mitch: set thrusterL to scaled down encoderL value
-					float tthrustL = (float)encoderL / 10.f;
-					if (tthrustL < 0.f) tthrustL = 0.f;
-					if (tthrustL > 3.f) tthrustL = 3.f;
-					thrusterL = tthrustL;
-
-					//Mitch: for debugging, can ignore this
-					//UE_LOG(LogTemp, Warning, TEXT("button = %d\n"), button);
-					//UE_LOG(LogTemp, Warning, TEXT("encoderL = %d encoderR = %d\n"), encoderL, encoderR);
-
-					//Mitch: clear control buffer after successfully reading command, prepare for new input
-					for (unsigned int i = 0; i < controlBufferPos; i++) controlBuffer[i] = '\0';
-					controlBufferPos = 0;
+					processHardwareEvent();
 				}
 			}
 
@@ -590,6 +555,44 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	}
 
 	//Mitch: ---END OF HARDWARE BLOCK--
+}
+
+//Mitch: protected function to perform hardware commands
+void ABattleChairsCharacter::processHardwareEvent() {
+	UE_LOG(LogTemp, Warning, TEXT("Arduino input: %s\n"), ANSI_TO_TCHAR(controlBuffer));
+
+	//Mitch: initialized input variables, may be a problem later on
+	int event = 0, hash = 0, readValues = 0;
+
+	//Mitch: format string "event:<event>,hash:<hash>;" should be read
+	readValues = sscanf(controlBuffer, "event:%d,hash:%d;", &event, &hash);
+
+	if (readValues != 2 || hash != (event + 1)) {
+		//Mitch: ignore invalid command, clear control buffer, and prepare for new input
+		for (unsigned int i = 0; i < controlBufferPos; i++) controlBuffer[i] = '\0';
+		controlBufferPos = 0;
+		return;
+	}
+
+	//Mitch: call functions related to read events
+	if (event & ENCODER_TOP_UP) ThrusterRUp();
+	if (event & ENCODER_TOP_DOWN) ThrusterRDown();
+	if (event & BUTTON_TOP_UP) Server_AttemptStopLeftFire();
+	if (event & BUTTON_TOP_DOWN) Server_AttemptLeftFire();
+	if (event & ENCODER_MIDDLE_UP) ThrusterFUp();
+	if (event & ENCODER_MIDDLE_DOWN) ThrusterFDown();
+	if (event & BUTTON_BOTTOM_UP) Server_AttemptStopRightFire();
+	if (event & BUTTON_BOTTOM_DOWN) Server_AttemptRightFire();
+	if (event & ENCODER_BOTTOM_UP) ThrusterLUp();
+	if (event & ENCODER_BOTTOM_DOWN) ThrusterLDown();
+
+	//Mitch: for debugging, can ignore this
+	//UE_LOG(LogTemp, Warning, TEXT("button = %d\n"), button);
+	//UE_LOG(LogTemp, Warning, TEXT("encoderL = %d encoderR = %d\n"), encoderL, encoderR);
+
+	//Mitch: clear control buffer after successfully reading command, prepare for new input
+	for (unsigned int i = 0; i < controlBufferPos; i++) controlBuffer[i] = '\0';
+	controlBufferPos = 0;
 }
 
 /*
