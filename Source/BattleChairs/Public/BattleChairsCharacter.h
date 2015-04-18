@@ -159,6 +159,9 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 	// End of APawn interface
 
+	//Mitch: protected function to perform hardware commands
+	void processHardwareEvent();
+
 public:
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
