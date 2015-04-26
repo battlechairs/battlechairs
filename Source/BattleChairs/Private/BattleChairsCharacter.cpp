@@ -198,7 +198,7 @@ void ABattleChairsCharacter::LeftFire()
 		FRotator turn = FRotator(0.0);
 		if (rightFire == false){
 			//turn.Add(0.0f, 3.0f, 0.0f);
-			rotationalVelocity += 1.f;
+			rotationalVelocity += 2.f;
 		}
 		else {
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
@@ -293,7 +293,7 @@ void ABattleChairsCharacter::RightFire()
 		FRotator turn = FRotator(0.0);
 		if (leftFire == false){
 			//turn.Add(0.0f, -3.0f, 0.0f);
-			rotationalVelocity += -1.f;
+			rotationalVelocity += -2.f;
 		}
 		else {
 			LaunchPawn(knockback * GetActorForwardVector(), false, false);
@@ -460,11 +460,11 @@ void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
 	FRotator turn = FRotator(0.0);
 	if (abs(rotationalVelocity) > 0.0001f) {
-		if (rotationalVelocity < -2) {
-			rotationalVelocity = -2;
+		if (rotationalVelocity < -5) {
+			rotationalVelocity = -5;
 		}
-		else if (rotationalVelocity > 2) {
-			rotationalVelocity = 2;
+		else if (rotationalVelocity > 5) {
+			rotationalVelocity = 5;
 		}
 		
 		const FRotator SpawnRotation = GetControlRotation();
