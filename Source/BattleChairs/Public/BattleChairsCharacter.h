@@ -49,6 +49,7 @@ public:
 
 	float rotationalVelocity;
 	float rotationalDrag;
+	FVector cameraStart;
 
 	FRotator chairDirection;
 

@@ -53,11 +53,12 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	rotationalDrag = 1.1f;
 
 	chairDirection = GetActorRotation();
+	cameraStart = FirstPersonCameraComponent->GetRelativeTransform().GetLocation();
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->AttachParent = GetCapsuleComponent();
-	FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
+	//FirstPersonCameraComponent->RelativeLocation = FVector(0, 0, 64.f); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = false;
 	//thrusterFPS = ObjectInitializer.CreateDefaultSubobject<UParticleSystem>(this, TEXT("thrusterFPS"));
 
@@ -133,7 +134,7 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 	if (!connected) {
 
 		//Mitch: connect to memory-mapped file, I think (might not always be COM6)
-		LPCWSTR portName = L"\\\\.\\COM7";
+		LPCWSTR portName = L"\\\\.\\COM3";
 		hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
 			0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -437,7 +438,7 @@ void ABattleChairsCharacter::AddControllerYawInput(float val)
 }
 
 void ABattleChairsCharacter::UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition) {
-	FVector newPosition = FVector(0.f, 0.f, 96.f) - GetActorRotation().operator-().RotateVector(viewPosition) + viewPosition;
+	FVector newPosition = cameraStart - GetActorRotation().operator-().RotateVector(viewPosition) + viewPosition;
 	FirstPersonCameraComponent->SetRelativeLocationAndRotation(newPosition, viewRotation);
 }
 
@@ -577,12 +578,12 @@ void ABattleChairsCharacter::processHardwareEvent() {
 	//Mitch: call functions related to read events
 	if (event & ENCODER_TOP_UP) ThrusterRUp();
 	if (event & ENCODER_TOP_DOWN) ThrusterRDown();
-	if (event & BUTTON_TOP_UP) Server_AttemptStopLeftFire();
-	if (event & BUTTON_TOP_DOWN) Server_AttemptLeftFire();
+	if (event & BUTTON_TOP_UP) Server_AttemptStopRightFire();
+	if (event & BUTTON_TOP_DOWN) Server_AttemptRightFire();
 	if (event & ENCODER_MIDDLE_UP) ThrusterFUp();
 	if (event & ENCODER_MIDDLE_DOWN) ThrusterFDown();
-	if (event & BUTTON_BOTTOM_UP) Server_AttemptStopRightFire();
-	if (event & BUTTON_BOTTOM_DOWN) Server_AttemptRightFire();
+	if (event & BUTTON_BOTTOM_UP) Server_AttemptStopLeftFire();
+	if (event & BUTTON_BOTTOM_DOWN) Server_AttemptLeftFire();
 	if (event & ENCODER_BOTTOM_UP) ThrusterLUp();
 	if (event & ENCODER_BOTTOM_DOWN) ThrusterLDown();
 
