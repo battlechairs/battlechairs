@@ -93,6 +93,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	class UAnimMontage* FireAnimation;
 
+	
 protected:
 	/** Fires a projectile (left click) with server validation*/
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -166,6 +167,10 @@ public:
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
+	UFUNCTION( BlueprintImplementableEvent, Category = "DmgSystem")
+		void setplayer(AActor* bullet);
+
+
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 	void UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition);

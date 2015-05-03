@@ -210,7 +210,8 @@ void ABattleChairsCharacter::LeftFire()
 		if (World != NULL)
 		{
 			// spawn the projectile at the muzzle
-			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+			
+			setplayer(World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation));
 			//World->SpawnActor<AProjectileParent>(BulletClass, SpawnLocation, SpawnRotation);
 		}
 
@@ -305,7 +306,8 @@ void ABattleChairsCharacter::RightFire()
 		if (World != NULL)
 		{
 			// spawn the projectile at the muzzle
-			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+			//World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
+			setplayer(World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation));
 		}
 
 		//ClientSetRotation(SpawnRotation - turn);
