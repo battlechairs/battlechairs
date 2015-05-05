@@ -51,9 +51,8 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 
 	rotationalVelocity = 0.f;
 	rotationalDrag = 1.1f;
-
 	chairDirection = GetActorRotation();
-	cameraStart = FirstPersonCameraComponent->GetRelativeTransform().GetLocation();
+	cameraStart = FVector(-45.8, 0, 153.8);
 
 	// Create a CameraComponent	
 	FirstPersonCameraComponent = ObjectInitializer.CreateDefaultSubobject<UCameraComponent>(this, TEXT("FirstPersonCamera"));
