@@ -29,15 +29,21 @@ int buttonBottomPinLast = LOW;
 int encoderBottomPinALast = LOW;
 
 // layout of pins on board
-int encoderTopPinA = 11;
-int encoderTopPinB = 10;
-int buttonTopPin = 9;
+int encoderTopPinA = 13;
+int encoderTopPinB = 12;
+int buttonTopPin = 10;
 int encoderMiddlePinA = 8;
 // board divide here
 int encoderMiddlePinB = 7;
-int buttonBottomPin = 6;
-int encoderBottomPinA = 5;
-int encoderBottomPinB = 4;
+int buttonBottomPin = 5;
+int encoderBottomPinA = 3;
+int encoderBottomPinB = 2;
+
+// for analog buttons
+const int useAnalogButtons = 1;
+const int analogThreshold = 815;
+int buttonTopAnalogPin = A0;
+int buttonBottomAnalogPin = A2;
 
 // other global variables
 int readValue = LOW;
@@ -82,12 +88,27 @@ void loop() {
     } 
     encoderTopPinALast = readValue;
 
-    // check for events in top button press state
-    readValue = digitalRead(buttonTopPin);
-    if (buttonTopPinLast != readValue) {
-        buttonTopPinLast = readValue;
-        if (readValue) event |= BUTTON_TOP_DOWN;
-        else event |= BUTTON_TOP_UP;
+    if (!useAnalogButtons) {
+        // check for events in top button press state
+        readValue = digitalRead(buttonTopPin);
+        if (buttonTopPinLast != readValue) {
+            buttonTopPinLast = readValue;
+            if (readValue) event |= BUTTON_TOP_DOWN;
+            else event |= BUTTON_TOP_UP;
+        }
+    } else if (useAnalogButtons) {
+        readValue = analogRead(buttonTopAnalogPin);
+        if (buttonTopPinLast == LOW) {
+            if (readValue < analogThreshold) {
+                buttonTopPinLast = HIGH;
+                event |= BUTTON_TOP_DOWN;
+            }
+        } else if (buttonTopPinLast == HIGH) {
+            if (readValue >= analogThreshold) {
+                buttonTopPinLast = LOW;
+                event |= BUTTON_TOP_UP;
+            }
+        }
     }
 
     // check for events in middle encoder position
@@ -102,12 +123,27 @@ void loop() {
     } 
     encoderMiddlePinALast = readValue;
 
-    // check for events in bottom button press state
-    readValue = digitalRead(buttonBottomPin);
-    if (buttonBottomPinLast != readValue) {
-        buttonBottomPinLast = readValue;
-        if (readValue) event |= BUTTON_BOTTOM_DOWN;
-        else event |= BUTTON_BOTTOM_UP;
+    if (!useAnalogButtons) {
+        // check for events in bottom button press state
+        readValue = digitalRead(buttonBottomPin);
+        if (buttonBottomPinLast != readValue) {
+            buttonBottomPinLast = readValue;
+            if (readValue) event |= BUTTON_BOTTOM_DOWN;
+            else event |= BUTTON_BOTTOM_UP;
+        }
+    } else if (useAnalogButtons) {
+        readValue = analogRead(buttonBottomAnalogPin);
+        if (buttonBottomPinLast == LOW) {
+            if (readValue < analogThreshold) {
+                buttonBottomPinLast = HIGH;
+                event |= BUTTON_BOTTOM_DOWN;
+            }
+        } else if (buttonBottomPinLast == HIGH) {
+            if (readValue >= analogThreshold) {
+                buttonBottomPinLast = LOW;
+                event |= BUTTON_BOTTOM_UP;
+            }
+        }
     }
 
     // check for events in middle encoder position
