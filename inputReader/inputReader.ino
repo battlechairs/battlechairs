@@ -41,7 +41,7 @@ int encoderBottomPinB = 2;
 
 // for analog buttons
 const int useAnalogButtons = 1;
-const int analogThreshold = 815;
+const int analogThreshold = 860;
 int buttonTopAnalogPin = A0;
 int buttonBottomAnalogPin = A2;
 
