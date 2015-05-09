@@ -41,9 +41,15 @@ int encoderBottomPinB = 2;
 
 // for analog buttons
 const int useAnalogButtons = 1;
-const int analogThreshold = 860;
+const int analogThreshold = 800;
 int buttonTopAnalogPin = A0;
 int buttonBottomAnalogPin = A2;
+
+// analog lowpass filter variables
+int buttonTopLowpass = 915;
+int buttonBottomLowpass = 915;
+int lowpassParts = 5;
+int lowpassResponse = 4;
 
 // other global variables
 int readValue = LOW;
@@ -98,13 +104,16 @@ void loop() {
         }
     } else if (useAnalogButtons) {
         readValue = analogRead(buttonTopAnalogPin);
+        buttonTopLowpass = (lowpassResponse * readValue +
+                           (lowpassParts - lowpassResponse) * buttonTopLowpass)
+                           / lowpassParts;
         if (buttonTopPinLast == LOW) {
-            if (readValue < analogThreshold) {
+            if (buttonTopLowpass < analogThreshold) {
                 buttonTopPinLast = HIGH;
                 event |= BUTTON_TOP_DOWN;
             }
         } else if (buttonTopPinLast == HIGH) {
-            if (readValue >= analogThreshold) {
+            if (buttonTopLowpass >= analogThreshold) {
                 buttonTopPinLast = LOW;
                 event |= BUTTON_TOP_UP;
             }
@@ -133,13 +142,16 @@ void loop() {
         }
     } else if (useAnalogButtons) {
         readValue = analogRead(buttonBottomAnalogPin);
+        buttonBottomLowpass = (lowpassResponse * readValue +
+                              (lowpassParts - lowpassResponse) * buttonBottomLowpass)
+                              / lowpassParts;
         if (buttonBottomPinLast == LOW) {
-            if (readValue < analogThreshold) {
+            if (buttonBottomLowpass < analogThreshold) {
                 buttonBottomPinLast = HIGH;
                 event |= BUTTON_BOTTOM_DOWN;
             }
         } else if (buttonBottomPinLast == HIGH) {
-            if (readValue >= analogThreshold) {
+            if (buttonBottomLowpass >= analogThreshold) {
                 buttonBottomPinLast = LOW;
                 event |= BUTTON_BOTTOM_UP;
             }
