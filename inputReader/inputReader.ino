@@ -29,8 +29,8 @@ int buttonBottomPinLast = LOW;
 int encoderBottomPinALast = LOW;
 
 // layout of pins on board
-int encoderTopPinA = 13;
-int encoderTopPinB = 12;
+int encoderTopPinA = 12;
+int encoderTopPinB = 11;
 int buttonTopPin = 10;
 int encoderMiddlePinA = 8;
 // board divide here
@@ -41,15 +41,15 @@ int encoderBottomPinB = 2;
 
 // for analog buttons
 const int useAnalogButtons = 1;
-const int analogThreshold = 800;
+const int analogThreshold = 765;
 int buttonTopAnalogPin = A0;
 int buttonBottomAnalogPin = A2;
 
 // analog lowpass filter variables
 int buttonTopLowpass = 915;
 int buttonBottomLowpass = 915;
-int lowpassParts = 5;
-int lowpassResponse = 4;
+int lowpassParts = 2;
+int lowpassResponse = 1;
 
 // other global variables
 int readValue = LOW;
