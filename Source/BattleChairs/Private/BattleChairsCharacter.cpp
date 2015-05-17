@@ -50,7 +50,11 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	turnrate = 5;
 
 	rotationalVelocity = 0.f;
-	rotationalDrag = 3.0f;
+	rotationalVelocityPositive = 0.f;
+	rotationalVelocityNegative = 0.f;
+	rotationalVelocityMaximum = 10.f;
+	rotationalVelocityIncrement = 2.f;
+	rotationalDrag = 3.f;
 	chairDirection = GetActorRotation();
 	cameraStart = FVector(-45.8, 0, 153.8);
 
@@ -94,7 +98,7 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-	
+
 	InputComponent->BindAction("Fire", IE_Pressed, this, &ABattleChairsCharacter::Server_AttemptLeftFire);
 	InputComponent->BindAction("SecondaryFire", IE_Pressed, this, &ABattleChairsCharacter::Server_AttemptRightFire);
 	InputComponent->BindAction("Fire", IE_Released, this, &ABattleChairsCharacter::Server_AttemptStopLeftFire);
@@ -104,7 +108,7 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 
 	InputComponent->BindAxis("MoveForward", this, &ABattleChairsCharacter::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &ABattleChairsCharacter::MoveRight);
-	
+
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
@@ -188,11 +192,10 @@ void ABattleChairsCharacter::LeftFire()
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		FVector offSet = FVector(0.0f, -180.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
-		if (rightFire == false){
-			//turn.Add(0.0f, 3.0f, 0.0f);
-			rotationalVelocity += 5.f * GetWorld()->GetDeltaSeconds();
-		}
-		else {
+
+		rotationalVelocityPositive += rotationalVelocityIncrement;
+
+		if (rightFire) {
 			LaunchPawn(knockback * GetWorld()->GetDeltaSeconds() * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
@@ -202,12 +205,9 @@ void ABattleChairsCharacter::LeftFire()
 		if (World != NULL)
 		{
 			// spawn the projectile at the muzzle
-			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
-			//World->SpawnActor<AProjectileParent>(BulletClass, SpawnLocation, SpawnRotation);
+			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation)->Instigator = (APawn*)this;
 		}
 
-		//ClientSetRotation(SpawnRotation - turn);
-		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		leftFire = true;
 	}
 }
@@ -264,11 +264,10 @@ void ABattleChairsCharacter::RightFire()
 		const FRotator SpawnRotation = FRotator(0, chairDirection.Yaw, 0);
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		FRotator turn = FRotator(0.0);
-		if (leftFire == false){
-			//turn.Add(0.0f, -3.0f, 0.0f);
-			rotationalVelocity += -5.f * GetWorld()->GetDeltaSeconds();
-		}
-		else {
+
+		rotationalVelocityNegative += rotationalVelocityIncrement;
+
+		if (leftFire) {
 			LaunchPawn(knockback * GetWorld()->GetDeltaSeconds() * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
@@ -281,8 +280,6 @@ void ABattleChairsCharacter::RightFire()
 			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation);
 		}
 
-		//ClientSetRotation(SpawnRotation - turn);
-		//LaunchPawn(-1000 * GetActorForwardVector(), false, false);
 		rightFire = true;
 	}
 
@@ -397,7 +394,7 @@ void ABattleChairsCharacter::AddControllerPitchInput(float val)
 {
 	// use quaternions to rotate camera
 	FQuat oldRotation = FirstPersonCameraComponent->GetRelativeTransform().GetRotation();
-	FQuat deltaRotation = FQuat(oldRotation.GetAxisY(), val/50.f * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+	FQuat deltaRotation = FQuat(oldRotation.GetAxisY(), val / 50.f * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 	FirstPersonCameraComponent->SetRelativeRotation(FRotator(deltaRotation * oldRotation));
 }
 
@@ -405,7 +402,7 @@ void ABattleChairsCharacter::AddControllerYawInput(float val)
 {
 	// use quaternions to rotate camera
 	FQuat oldRotation = FirstPersonCameraComponent->GetRelativeTransform().GetRotation();
-	FQuat deltaRotation = FQuat(FVector(0.f, 0.f, 1.f), val/50.f * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	FQuat deltaRotation = FQuat(FVector(0.f, 0.f, 1.f), val / 50.f * BaseTurnRate * GetWorld()->GetDeltaSeconds());
 	FirstPersonCameraComponent->SetRelativeRotation(FRotator(deltaRotation * oldRotation));
 }
 
@@ -417,14 +414,15 @@ void ABattleChairsCharacter::UpdateOculusCamera(const FRotator& viewRotation, co
 inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
 	if (leftFire) {
-		leftFireDelay--; 
+		leftFireDelay -= (int)ceil(10.0 * DeltaTime);
 		if (leftFireDelay <= 0) {
+			if (rightFire) rightFireDelay = 0;
 			LeftFire();
 			leftFireDelay = firerate;
 		}
 	}
 	if (rightFire) {
-		rightFireDelay--;
+		rightFireDelay -= (int)ceil(10.0 * DeltaTime);
 		if (rightFireDelay <= 0) {
 			RightFire();
 			rightFireDelay = firerate;
@@ -432,18 +430,37 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 	}
 	AddMovementInput(-1 * GetActorForwardVector(), thrusterF);
 	FRotator turn = FRotator(0.0);
+
+	float currentRotationalDrag;
+
+	rotationalVelocity = rotationalVelocityPositive - rotationalVelocityNegative;
+
+	if (rightFire != leftFire) {// XOR operator
+		currentRotationalDrag = 0.5 * rotationalDrag;
+	}
+	else {
+		if (rightFire && leftFire)
+			rotationalVelocity = rotationalVelocityPositive = rotationalVelocityNegative = 0.f;
+		currentRotationalDrag = rotationalDrag;
+	}
+
 	if (abs(rotationalVelocity) > 0.0001f) {
-		if (rotationalVelocity < -5) {
-			rotationalVelocity = -5;
+		if (rotationalVelocity < -rotationalVelocityMaximum) {
+			rotationalVelocity = -rotationalVelocityMaximum;
 		}
-		else if (rotationalVelocity > 5) {
-			rotationalVelocity = 5;
+		else if (rotationalVelocity > rotationalVelocityMaximum) {
+			rotationalVelocity = rotationalVelocityMaximum;
 		}
-		
+
 		const FRotator SpawnRotation = GetControlRotation();
-		//FRotator turn = FRotator(0.0);
+		
 		turn.Add(0.f, rotationalVelocity, 0.f);
-		rotationalVelocity -= (rotationalVelocity - rotationalVelocity / rotationalDrag) * GetWorld()->GetDeltaSeconds();
+
+		rotationalVelocityPositive -= rotationalVelocityPositive * currentRotationalDrag * DeltaTime;
+		if (rotationalVelocityPositive < 0.f) rotationalVelocityPositive = 0.f;
+		rotationalVelocityNegative -= rotationalVelocityNegative * currentRotationalDrag * DeltaTime;
+		if (rotationalVelocityNegative < 0.f) rotationalVelocityNegative = 0.f;
+
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
 		chairDirection = SpawnRotation - turn;
 		AddActorLocalRotation(chairDirection - SpawnRotation);
@@ -461,21 +478,21 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 	AddMovementInput(LeftThrusterDir, thrusterL);
 	AddMovementInput(RightThrusterDir, thrusterR);
 
-	
-	
+
+
 	//lift = min(thrusterF, thrusterL, thrusterR);
 	lift = (thrusterF + thrusterL + thrusterR) / 3.0;
 	SpawnRate = (ceil(lift * 4));
 	thrusterFV = FVector(0, 0, thrusterF * -300);
 	thrusterLV = FVector(0, 0, thrusterL * -300);
 	thrusterRV = FVector(0, 0, thrusterR * -300);
-	
+
 	/*
 	if (lift > .4)
 	{
-		lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z) / 120;
-		FVector up = FVector(0, 0, lift);
-		AddMovementInput(GetActorUpVector(), lift);
+	lift = 30 + sqrt(lift * 100) - (GetActorLocation().Z) / 120;
+	FVector up = FVector(0, 0, lift);
+	AddMovementInput(GetActorUpVector(), lift);
 	}
 	*/
 
@@ -502,7 +519,8 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 		//Mitch: make sure number of bytes to read does not exceed buffer size
 		if (status.cbInQue > nbChar) {
 			toRead = nbChar;
-		} else {
+		}
+		else {
 			toRead = status.cbInQue;
 		}
 
