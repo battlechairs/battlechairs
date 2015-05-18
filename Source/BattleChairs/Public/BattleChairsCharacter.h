@@ -48,6 +48,10 @@ public:
 	float lift;
 
 	float rotationalVelocity;
+	float rotationalVelocityPositive;
+	float rotationalVelocityNegative;
+	float rotationalVelocityMaximum;
+	float rotationalVelocityIncrement;
 	float rotationalDrag;
 	FVector cameraStart;
 
