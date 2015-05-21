@@ -26,7 +26,8 @@
 
 ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-{
+{	
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -48,6 +49,9 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	firerate = 5;
 	knockback = -10000;
 	turnrate = 5;
+	uniqueID = GetUniqueID();
+	speed = GetVelocity();
+
 
 	rotationalVelocity = 0.f;
 	rotationalVelocityPositive = 0.f;
@@ -177,13 +181,15 @@ bool ABattleChairsCharacter::Server_AttemptLeftFire_Validate()
 /* Attempt to fire projectile */
 void ABattleChairsCharacter::Server_AttemptLeftFire_Implementation()
 {
+	uint32 ID = uniqueID;
+	FVector speed = GetVelocity();
 	if (Role == ROLE_Authority)
 	{
-		LeftFire();
+		LeftFire(ID, speed);
 	}
 }
 /* Fire projectile */
-void ABattleChairsCharacter::LeftFire()
+void ABattleChairsCharacter::LeftFire(int32 ID, FVector Speed)
 {
 	// try and fire a projectile
 	if (ProjectileClass != NULL)
@@ -205,7 +211,7 @@ void ABattleChairsCharacter::LeftFire()
 		if (World != NULL)
 		{
 			// spawn the projectile at the muzzle
-			World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation)->Instigator = (APawn*)this;
+			setplayer(World->SpawnActor<ABattleChairsProjectile>(ProjectileClass, SpawnLocation, SpawnRotation), ID, Speed);
 		}
 
 		leftFire = true;
@@ -297,6 +303,7 @@ void ABattleChairsCharacter::Server_AttemptStopRightFire_Implementation()
 	{
 		StopRightFire();
 	}
+	UE_LOG(LogTemp, Warning, TEXT("ID: %d"), GetUniqueID());
 }
 
 /* Stop firing */
@@ -311,9 +318,12 @@ void ABattleChairsCharacter::TouchStarted(const ETouchIndex::Type FingerIndex, c
 	// only fire for first finger down
 	if (FingerIndex == 0)
 	{
-		LeftFire();
+		LeftFire(uniqueID,GetVelocity());
 	}
 }
+
+
+
 
 void ABattleChairsCharacter::MoveForward(float Value)
 {
@@ -417,7 +427,7 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 		leftFireDelay -= (int)ceil(10.0 * DeltaTime);
 		if (leftFireDelay <= 0) {
 			if (rightFire) rightFireDelay = 0;
-			LeftFire();
+			LeftFire(uniqueID, GetVelocity());
 			leftFireDelay = firerate;
 		}
 	}
@@ -496,7 +506,8 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 	}
 	*/
 
-	AddMovementInput(GetActorUpVector(), lift - 1.0);
+	//gravity
+	AddMovementInput(GetActorUpVector(), lift - 2);
 
 	//Server_AttemptLift();
 	//Mitch: ---START OF HARDWARE BLOCK--

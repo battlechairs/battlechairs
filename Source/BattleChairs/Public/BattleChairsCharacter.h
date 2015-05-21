@@ -24,6 +24,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
 		float PlayerHealth;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
+		int32 uniqueID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
+		FVector speed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
 	float firerate;
@@ -102,7 +106,7 @@ protected:
 	/** Fires a projectile (left click) with server validation*/
 	UFUNCTION(Server, Reliable, WithValidation)
 		void Server_AttemptLeftFire();
-	void LeftFire();
+	void LeftFire(int32 ID, FVector Speed);
 
 	/** Stops left fire with server validation */
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -171,6 +175,9 @@ public:
 	/** Returns Mesh1P subobject **/
 	//FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
+	UFUNCTION(BlueprintImplementableEvent, Category = "DmgSystem")
+		void setplayer(AActor* bullet, int32 ID, FVector vel);
+
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 	void UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition);
