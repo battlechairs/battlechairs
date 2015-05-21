@@ -48,7 +48,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	lift = 0;
 	firerate = 5;
 	knockback = -10000;
-	turnrate = 5;
+	turnrate = 3;
 	uniqueID = GetUniqueID();
 	speed = GetVelocity();
 
@@ -56,8 +56,8 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	rotationalVelocity = 0.f;
 	rotationalVelocityPositive = 0.f;
 	rotationalVelocityNegative = 0.f;
-	rotationalVelocityMaximum = 10.f;
-	rotationalVelocityIncrement = 2.f;
+	rotationalVelocityMaximum = 1.f;
+	rotationalVelocityIncrement = 1.f;
 	rotationalDrag = 3.f;
 	chairDirection = GetActorRotation();
 	cameraStart = FVector(-45.8, 0, 153.8);
