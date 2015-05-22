@@ -417,8 +417,9 @@ void ABattleChairsCharacter::AddControllerYawInput(float val)
 }
 
 void ABattleChairsCharacter::UpdateOculusCamera(const FRotator& viewRotation, const FVector& viewPosition) {
-	FVector newPosition = cameraStart - GetActorRotation().operator-().RotateVector(viewPosition) + viewPosition;
+	FVector newPosition = cameraStart - GetActorRotation().operator-().RotateVector(viewPosition) + viewPosition * 2.5;
 	FirstPersonCameraComponent->SetRelativeLocationAndRotation(newPosition, viewRotation);
+
 }
 
 inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
