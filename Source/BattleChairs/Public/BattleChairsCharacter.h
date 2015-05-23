@@ -19,8 +19,8 @@ public:
 	//Public Variables
 	bool rightFire;
 	bool leftFire;
-	int rightFireDelay;
-	int leftFireDelay;
+	float rightFireDelay;
+	float leftFireDelay;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
 		float PlayerHealth;

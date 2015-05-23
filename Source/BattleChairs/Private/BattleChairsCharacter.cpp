@@ -57,7 +57,7 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	rotationalVelocityPositive = 0.f;
 	rotationalVelocityNegative = 0.f;
 	rotationalVelocityMaximum = 1.f;
-	rotationalVelocityIncrement = 1.f;
+	rotationalVelocityIncrement = 10.f;
 	rotationalDrag = 3.f;
 	chairDirection = GetActorRotation();
 	cameraStart = FVector(-45.8, 0, 153.8);
@@ -199,7 +199,12 @@ void ABattleChairsCharacter::LeftFire(int32 ID, FVector Speed)
 		FVector offSet = FVector(0.0f, -180.0f, 0.0f);
 		FRotator turn = FRotator(0.0);
 
-		rotationalVelocityPositive += rotationalVelocityIncrement;
+		float dt = 60.0 * GetWorld()->GetDeltaSeconds();
+
+		rotationalVelocityPositive += rotationalVelocityIncrement * dt;
+
+		if (rotationalVelocityPositive > rotationalVelocityMaximum * dt) rotationalVelocityPositive = rotationalVelocityMaximum * dt;
+		if (rotationalVelocityPositive < 0.f) rotationalVelocityPositive = 0.f;
 
 		if (rightFire) {
 			LaunchPawn(knockback * GetWorld()->GetDeltaSeconds() * GetActorForwardVector(), false, false);
@@ -271,7 +276,12 @@ void ABattleChairsCharacter::RightFire()
 		// MuzzleOffset is in camera space, so transform it to world space before offsetting from the character location to find the final muzzle position
 		FRotator turn = FRotator(0.0);
 
-		rotationalVelocityNegative += rotationalVelocityIncrement;
+		float dt = 60.0 * GetWorld()->GetDeltaSeconds();
+
+		rotationalVelocityNegative += rotationalVelocityIncrement * dt;
+
+		if (rotationalVelocityNegative > rotationalVelocityMaximum * dt) rotationalVelocityNegative = rotationalVelocityMaximum * dt;
+		if (rotationalVelocityNegative < 0.f) rotationalVelocityNegative = 0.f;
 
 		if (leftFire) {
 			LaunchPawn(knockback * GetWorld()->GetDeltaSeconds() * GetActorForwardVector(), false, false);
@@ -424,8 +434,11 @@ void ABattleChairsCharacter::UpdateOculusCamera(const FRotator& viewRotation, co
 
 inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) {
 	Super::TickActor(DeltaTime, TickType, ThisTickFunction);
+
+	float yes = 40.0;
+
 	if (leftFire) {
-		leftFireDelay -= (int)ceil(10.0 * DeltaTime);
+		leftFireDelay -= yes * DeltaTime;
 		if (leftFireDelay <= 0) {
 			if (rightFire) rightFireDelay = 0;
 			LeftFire(uniqueID, GetVelocity());
@@ -433,7 +446,7 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 		}
 	}
 	if (rightFire) {
-		rightFireDelay -= (int)ceil(10.0 * DeltaTime);
+		rightFireDelay -= yes * DeltaTime;
 		if (rightFireDelay <= 0) {
 			RightFire();
 			rightFireDelay = firerate;
@@ -446,23 +459,19 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 
 	rotationalVelocity = rotationalVelocityPositive - rotationalVelocityNegative;
 
-	if (rightFire != leftFire) {// XOR operator
+	if (rightFire != leftFire) { // either trigger held -> low drag
 		currentRotationalDrag = 0.5 * rotationalDrag;
 	}
-	else {
-		if (rightFire && leftFire)
-			rotationalVelocity = rotationalVelocityPositive = rotationalVelocityNegative = 0.f;
+	else if (rightFire && leftFire) { // both triggers held -> high drag
+		currentRotationalDrag = 2.0 * rotationalDrag;
+	}
+	else { // no trigger held -> normal drag
 		currentRotationalDrag = rotationalDrag;
 	}
 
-	if (abs(rotationalVelocity) > 0.0001f) {
-		if (rotationalVelocity < -rotationalVelocityMaximum) {
-			rotationalVelocity = -rotationalVelocityMaximum;
-		}
-		else if (rotationalVelocity > rotationalVelocityMaximum) {
-			rotationalVelocity = rotationalVelocityMaximum;
-		}
+	UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, %f"), rotationalVelocity, currentRotationalDrag, rotationalVelocityNegative, rotationalVelocityPositive);
 
+	if (abs(rotationalVelocityPositive) > 0.0001f || abs(rotationalVelocityNegative) > 0.0001f) {
 		const FRotator SpawnRotation = GetControlRotation();
 		
 		turn.Add(0.f, rotationalVelocity, 0.f);
