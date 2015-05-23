@@ -41,7 +41,8 @@ int encoderBottomPinB = 2;
 
 // for analog buttons
 const int useAnalogButtons = 1;
-const int analogThreshold = 765;
+const int analogThresholdLow = 800;
+const int analogThresholdHigh = 880;
 int buttonTopAnalogPin = A0;
 int buttonBottomAnalogPin = A2;
 
@@ -108,12 +109,12 @@ void loop() {
                            (lowpassParts - lowpassResponse) * buttonTopLowpass)
                            / lowpassParts;
         if (buttonTopPinLast == LOW) {
-            if (buttonTopLowpass < analogThreshold) {
+            if (buttonTopLowpass < analogThresholdLow) {
                 buttonTopPinLast = HIGH;
                 event |= BUTTON_TOP_DOWN;
             }
         } else if (buttonTopPinLast == HIGH) {
-            if (buttonTopLowpass >= analogThreshold) {
+            if (buttonTopLowpass >= analogThresholdHigh) {
                 buttonTopPinLast = LOW;
                 event |= BUTTON_TOP_UP;
             }
@@ -146,12 +147,12 @@ void loop() {
                               (lowpassParts - lowpassResponse) * buttonBottomLowpass)
                               / lowpassParts;
         if (buttonBottomPinLast == LOW) {
-            if (buttonBottomLowpass < analogThreshold) {
+            if (buttonBottomLowpass < analogThresholdLow) {
                 buttonBottomPinLast = HIGH;
                 event |= BUTTON_BOTTOM_DOWN;
             }
         } else if (buttonBottomPinLast == HIGH) {
-            if (buttonBottomLowpass >= analogThreshold) {
+            if (buttonBottomLowpass >= analogThresholdHigh) {
                 buttonBottomPinLast = LOW;
                 event |= BUTTON_BOTTOM_UP;
             }
