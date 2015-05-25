@@ -21,7 +21,8 @@ public:
 	bool leftFire;
 	float rightFireDelay;
 	float leftFireDelay;
-
+	UFUNCTION(BlueprintCallable, Category = "Functions")
+		FString GetCurrentMapName();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)
 		float PlayerHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attribute)

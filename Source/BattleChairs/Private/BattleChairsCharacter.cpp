@@ -610,3 +610,13 @@ inline float ABattleChairsCharacter::min(float a, float b, float c) {
 	if (b < c) return b;
 	return c;
 }
+
+FString ABattleChairsCharacter::GetCurrentMapName()
+
+{
+	UWorld* MyWorld = GetWorld();
+	FString CurrentMapName = MyWorld->GetMapName();
+
+	return CurrentMapName;
+
+}
