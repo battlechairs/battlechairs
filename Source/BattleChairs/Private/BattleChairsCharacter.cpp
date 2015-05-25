@@ -210,7 +210,7 @@ void ABattleChairsCharacter::LeftFire(int32 ID, FVector Speed)
 			LaunchPawn(knockback * GetWorld()->GetDeltaSeconds() * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset) + SpawnRotation.RotateVector(offSet);
-		FVector testGunOffset = FVector(175.0f, 85.0f, 20.0f); //(150.0f, 75.0f, 35.0f);
+		FVector testGunOffset = FVector(175.0f, 85.0f, -85.0f); //(150.0f, 75.0f, 35.0f);
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(testGunOffset) + SpawnRotation.RotateVector(offSet);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
@@ -287,7 +287,7 @@ void ABattleChairsCharacter::RightFire()
 			LaunchPawn(knockback * GetWorld()->GetDeltaSeconds() * GetActorForwardVector(), false, false);
 		}
 		//const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(GunOffset);
-		FVector testGunOffset = FVector(175.0f, 85.0f, 20.0f);
+		FVector testGunOffset = FVector(175.0f, 110.0f, -85.0f);
 		const FVector SpawnLocation = GetActorLocation() + SpawnRotation.RotateVector(testGunOffset);
 		UWorld* const World = GetWorld();
 		if (World != NULL)
