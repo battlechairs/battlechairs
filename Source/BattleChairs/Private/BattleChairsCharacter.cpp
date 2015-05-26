@@ -24,6 +24,8 @@
 #define ENCODER_BOTTOM_UP   0x100
 #define ENCODER_BOTTOM_DOWN 0x200
 
+#define COM_PORT_MAX 255
+
 ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {	
@@ -79,6 +81,11 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 //Mitch: destructor disconnects hardware
 ABattleChairsCharacter::~ABattleChairsCharacter() {
 	if (connected) {
+		//Mitch: tell arduino to disconnect and go back to listen mode
+		DWORD32 bytesProcessed;
+		char* disconnectRequest = "BC_disconnect;";
+		WriteFile(hSerial, (LPVOID)disconnectRequest, strlen(disconnectRequest), (LPDWORD)(&bytesProcessed), NULL);
+
 		CloseHandle(hSerial);
 		UE_LOG(LogTemp, Warning, TEXT("disconnected from Arduino hardware"));
 	}
@@ -131,24 +138,32 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 
 	//Mitch: if not connected to hardware (shouldn't be anyway), connect
 	if (!connected) {
+		//Mitch: use buffer for COM port name
+		LPCWSTR portName = portNameBuffer;
 
-		//Mitch: connect to memory-mapped file, I think (might not always be COM6)
-		LPCWSTR portName = L"\\\\.\\COM3";
-		hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
-			0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		//Mitch: loop through a set of COM ports to try to find the arduino
+		for (int comIter = 1; comIter < COM_PORT_MAX; comIter++) {
+			swprintf(portNameBuffer, 13, L"\\\\.\\COM%d", comIter);
 
-		//Mitch: check if CreateFile worked
-		if (hSerial == INVALID_HANDLE_VALUE) {
-			UE_LOG(LogTemp, Warning, TEXT("unable to connect to Arduino hardware"));
-		}
-		else {
-			connected = true;
-			DCB dcbSerialParams = { 0 };
+			hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
+				0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-			if (!GetCommState(hSerial, &dcbSerialParams)) {
-				UE_LOG(LogTemp, Warning, TEXT("unable to get Arduino serial port"));
+			//Mitch: check if CreateFile worked, if not try next port
+			if (hSerial == INVALID_HANDLE_VALUE) {
+				UE_LOG(LogTemp, Warning, TEXT("COM port %d unavailable for communication"), comIter);
+				continue;
 			}
 			else {
+				UE_LOG(LogTemp, Warning, TEXT("attempting communication with COM port %d:"), comIter);
+				connected = true;
+				DCB dcbSerialParams = { 0 };
+
+				if (!GetCommState(hSerial, &dcbSerialParams)) {
+					UE_LOG(LogTemp, Warning, TEXT(" -GetCommState failed"));
+					CloseHandle(hSerial);
+					continue;
+				}
+
 				//Mitch: ensure these settings match settings in device mananger
 				dcbSerialParams.BaudRate = CBR_9600;
 				dcbSerialParams.ByteSize = 8;
@@ -156,16 +171,42 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 				dcbSerialParams.Parity = NOPARITY;
 
 				if (!SetCommState(hSerial, &dcbSerialParams)) {
-					UE_LOG(LogTemp, Warning, TEXT("unable to set Arduino serial port parameters"));
+					UE_LOG(LogTemp, Warning, TEXT(" -SetCommState failed"));
+					CloseHandle(hSerial);
+					continue;
 				}
-				else {
-					UE_LOG(LogTemp, Warning, TEXT("successfully connected to Arduino hardware"));
+
+				if (!verifyCurrentPort()) {
+					UE_LOG(LogTemp, Warning, TEXT(" -invalid verification"));
+					CloseHandle(hSerial);
+					continue;
 				}
+
+				UE_LOG(LogTemp, Warning, TEXT("successfully connected to Arduino hardware"));
+				connected = true;
+				break;
 			}
 		}
 	}
 
 	//Mitch: ---END OF HARDWARE BLOCK--
+}
+
+bool ABattleChairsCharacter::verifyCurrentPort() {
+	DWORD32 bytesProcessed;
+
+	char* connectRequest = "BC_connect;";
+	char* acknowledgeResponse = "BC_acknowledge;";
+
+	char response[16];
+	memset(response, 0, 16);
+
+	WriteFile(hSerial, (LPVOID)connectRequest, strlen(connectRequest), (LPDWORD)(&bytesProcessed), NULL);
+	ReadFile(hSerial, (LPVOID)response, 15, (LPDWORD)(&bytesProcessed), NULL);
+
+	if (strcmp(acknowledgeResponse, response) == 0) return true;
+
+	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -468,8 +509,6 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 	else { // no trigger held -> normal drag
 		currentRotationalDrag = rotationalDrag;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("%f, %f, %f, %f"), rotationalVelocity, currentRotationalDrag, rotationalVelocityNegative, rotationalVelocityPositive);
 
 	if (abs(rotationalVelocityPositive) > 0.0001f || abs(rotationalVelocityNegative) > 0.0001f) {
 		const FRotator SpawnRotation = GetControlRotation();
