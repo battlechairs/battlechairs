@@ -51,6 +51,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	AActor* WeaponType;
 	float lift;
+	float ThrusterIncrement;
+	float ThrusterMaximum;
 
 	float rotationalVelocity;
 	float rotationalVelocityPositive;
