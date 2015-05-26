@@ -51,6 +51,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	AActor* WeaponType;
 	float lift;
+	float ThrusterIncrement;
+	float ThrusterMaximum;
 
 	float rotationalVelocity;
 	float rotationalVelocityPositive;
@@ -69,6 +71,7 @@ public:
 	bool connected = false;
 	char controlBuffer[100];
 	unsigned int controlBufferPos = 0;
+	WCHAR portNameBuffer[16];
 
 	ABattleChairsCharacter(const FObjectInitializer& ObjectInitializer);
 
@@ -171,6 +174,9 @@ protected:
 
 	//Mitch: protected function to perform hardware commands
 	void processHardwareEvent();
+
+	//Mitch: protected function to perform verification on a COM port (uses hSerial)
+	bool verifyCurrentPort();
 
 public:
 	/** Returns Mesh1P subobject **/

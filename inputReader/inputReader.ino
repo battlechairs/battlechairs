@@ -279,6 +279,8 @@ void loop() {
         // if request to disconnect, enter listen mode
         if (incomingByte == ';') {
             mode = eventLoopParse();
+            // check if connection request receieved
+            listenParse();
             requestBufferPos = 0;
             requestBuffer[0] = 0;
         }
