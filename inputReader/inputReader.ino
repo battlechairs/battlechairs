@@ -56,6 +56,21 @@ int lowpassResponse = 1;
 int readValue = LOW;
 int event = 0;
 
+// input-reading variables
+char incomingByte = 0;
+int requestBufferPos = 0;
+char requestBuffer[16];
+
+// communication protocols
+char eventLoopRequest[16] = "BC_connect;";
+char listenRequest[16] = "BC_disconnect;";
+char listenResponse[16] = "BC_acknowledge;";
+
+// different behaviors of arduino
+const int listenMode = 0;
+const int eventLoopMode = 1;
+int mode = listenMode;
+
 void setup() {
     // setup two pins to read from top encoder
     pinMode(encoderTopPinA, INPUT);
@@ -79,7 +94,74 @@ void setup() {
     Serial.begin(9600);
 }
 
+int listenParse() {
+    int iter;
+
+    // compare input buffer with protocol
+    for (iter = 0; iter < 16; iter++) {
+        // if invalid, ignore
+        if (requestBuffer[iter] != eventLoopRequest[iter]) {
+            return listenMode;
+        }
+        // if valid up to ';', acknowledge and enter event loop mode
+        else if (requestBuffer[iter] == ';') {
+            Serial.print(listenResponse);
+            return eventLoopMode;
+        }
+    }
+
+    // default to listen mode
+    return listenMode;
+}
+
+int eventLoopParse() {
+    int iter;
+
+    // compare input buffer with protocol
+    for (iter = 0; iter < 16; iter++) {
+        // if invalid, ignore
+        if (requestBuffer[iter] != listenRequest[iter]) {
+            return eventLoopMode;
+        }
+        // if valid up to ';', enter listen mode
+        else if (requestBuffer[iter] == ';') {
+            return listenMode;
+        }
+    }
+
+    // default to event loop mode
+    return eventLoopMode;
+}
+
 void loop() {
+    // LISTEN MODE
+    if (mode == listenMode) {
+        // read every available input character
+        while (Serial.available() > 0) {
+            incomingByte = (char)Serial.read();
+
+            requestBuffer[requestBufferPos] = incomingByte;
+            requestBufferPos++;
+
+            // prevent input buffer from overflowing
+            if (requestBufferPos > 15) {
+                requestBufferPos = 15;
+            }
+
+            // when ';' input, attempt to parse protocol
+            // if request to connect, enter event loop mode
+            if (incomingByte == ';') {
+                mode = listenParse();
+                requestBufferPos = 0;
+                requestBuffer[0] = 0;
+            }
+        }
+
+        // re-enter loop function
+        return;
+    }
+
+    // EVENT LOOP MODE
     // assume this loop has no events
     event = 0;
 
@@ -179,6 +261,27 @@ void loop() {
         Serial.print(",hash:");
         Serial.print(event+1);
         Serial.print(";");
+    }
+
+    // check for input while in event loop mode
+    while (Serial.available() > 0) {
+        incomingByte = (char)Serial.read();
+
+        requestBuffer[requestBufferPos] = incomingByte;
+        requestBufferPos++;
+
+        // prevent input buffer from overflowing
+        if (requestBufferPos > 15) {
+            requestBufferPos = 15;
+        }
+
+        // when ';' input, attempt to parse protocol
+        // if request to disconnect, enter listen mode
+        if (incomingByte == ';') {
+            mode = eventLoopParse();
+            requestBufferPos = 0;
+            requestBuffer[0] = 0;
+        }
     }
 }
 
