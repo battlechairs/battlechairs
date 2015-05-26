@@ -48,6 +48,9 @@ ABattleChairsCharacter::ABattleChairsCharacter(const FObjectInitializer& ObjectI
 	thrusterLV = FVector(0);
 	thrusterRV = FVector(0);
 	lift = 0;
+	ThrusterIncrement = 0.3;
+	ThrusterMaximum = 6.0;
+
 	firerate = 5;
 	knockback = -10000;
 	turnrate = 3;
@@ -396,41 +399,53 @@ void ABattleChairsCharacter::MoveRight(float Value)
 
 void ABattleChairsCharacter::ThrusterFUp()
 {
-	UE_LOG(LogTemp, Warning, TEXT("thrusterFUp"));
-	if (thrusterF <= 3) thrusterF += 0.1f;
+	//UE_LOG(LogTemp, Warning, TEXT("thrusterFUp"));
+	//if (thrusterF <= 3) thrusterF += 0.1f;
+	thrusterF += ThrusterIncrement;
+	if (thrusterF > ThrusterMaximum) thrusterF = ThrusterMaximum;
 }
 
 void ABattleChairsCharacter::ThrusterFDown()
 {
-	UE_LOG(LogTemp, Warning, TEXT("thrusterFDown"));
-	if (thrusterF >= .1f) thrusterF -= 0.1f;
-	if (thrusterF > .09f && thrusterF < 0.2f) thrusterF = 0.f;
+	//UE_LOG(LogTemp, Warning, TEXT("thrusterFDown"));
+	//if (thrusterF >= .1f) thrusterF -= 0.1f;
+	//if (thrusterF > .09f && thrusterF < 0.2f) thrusterF = 0.f;
+	thrusterF -= ThrusterIncrement;
+	if (thrusterF < 0.f) thrusterF = 0.f;
 }
 
 void ABattleChairsCharacter::ThrusterLUp()
 {
-	UE_LOG(LogTemp, Warning, TEXT("thrusterLUp"));
-	if (thrusterL <= 3) thrusterL += 0.1f;
+	//UE_LOG(LogTemp, Warning, TEXT("thrusterLUp"));
+	//if (thrusterL <= 3) thrusterL += 0.1f;
+	thrusterL += ThrusterIncrement;
+	if (thrusterL > ThrusterMaximum) thrusterL = ThrusterMaximum;
 }
 
 void ABattleChairsCharacter::ThrusterLDown()
 {
-	UE_LOG(LogTemp, Warning, TEXT("thrusterLDown"));
-	if (thrusterL >= 0.1) thrusterL -= 0.1f;
-	if (thrusterL > .09f && thrusterL < 0.2f) thrusterL = 0.f;
+	//UE_LOG(LogTemp, Warning, TEXT("thrusterLDown"));
+	//if (thrusterL >= 0.1) thrusterL -= 0.1f;
+	//if (thrusterL > .09f && thrusterL < 0.2f) thrusterL = 0.f;
+	thrusterL -= ThrusterIncrement;
+	if (thrusterL < 0.f) thrusterL = 0.f;
 }
 
 void ABattleChairsCharacter::ThrusterRUp()
 {
-	UE_LOG(LogTemp, Warning, TEXT("thrusterRUp"));
-	if (thrusterR <= 3) thrusterR += 0.1f;
+	//UE_LOG(LogTemp, Warning, TEXT("thrusterRUp"));
+	//if (thrusterR <= 3) thrusterR += 0.1f;
+	thrusterR += ThrusterIncrement;
+	if (thrusterR > ThrusterMaximum) thrusterR = ThrusterMaximum;
 }
 
 void ABattleChairsCharacter::ThrusterRDown()
 {
-	UE_LOG(LogTemp, Warning, TEXT("thrusterRDown"));
-	if (thrusterR >= 0.1) thrusterR -= 0.1f;
-	if (thrusterR > .09f && thrusterR < 0.2f) thrusterR = 0.f;
+	//UE_LOG(LogTemp, Warning, TEXT("thrusterRDown"));
+	//if (thrusterR >= 0.1) thrusterR -= 0.1f;
+	//if (thrusterR > .09f && thrusterR < 0.2f) thrusterR = 0.f;
+	thrusterR -= ThrusterIncrement;
+	if (thrusterR < 0.f) thrusterR = 0.f;
 }
 
 bool ABattleChairsCharacter::ThrusterFON()
