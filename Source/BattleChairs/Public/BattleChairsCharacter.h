@@ -62,6 +62,9 @@ public:
 	float rotationalDrag;
 	FVector cameraStart;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
+	float rotationalVelocityMultiplier = 2.f;
+
 	FRotator chairDirection;
 
 	//Mitch: these variables are for hardware communication

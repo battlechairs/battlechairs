@@ -525,6 +525,8 @@ inline void ABattleChairsCharacter::TickActor(float DeltaTime, enum ELevelTick T
 		currentRotationalDrag = rotationalDrag;
 	}
 
+	rotationalVelocity *= rotationalVelocityMultiplier;
+
 	if (abs(rotationalVelocityPositive) > 0.0001f || abs(rotationalVelocityNegative) > 0.0001f) {
 		const FRotator SpawnRotation = GetControlRotation();
 		
