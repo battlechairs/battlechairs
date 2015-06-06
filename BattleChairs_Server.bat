@@ -1,2 +1,2 @@
 @echo off
-%~dp0WindowsNoEditor\BattleChairs.exe ?listen -game LANGAME
+%~dp0WindowsNoEditor\BattleChairs.exe Menu?listen -game LANGAME
