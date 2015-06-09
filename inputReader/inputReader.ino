@@ -40,15 +40,19 @@ int encoderBottomPinA = 3;
 int encoderBottomPinB = 2;
 
 // for analog buttons
-const int useAnalogButtons = 1;
-const int analogThresholdLow = 800;
-const int analogThresholdHigh = 880;
+int useAnalogButtons = 1;
 int buttonTopAnalogPin = A0;
 int buttonBottomAnalogPin = A2;
+int analogHighThresholdOffset = -75;
+int analogLowThresholdOffset = -100;
+
+// tracking voltage of unpressed buttons
+int analogTopMaximumValue = 0;
+int analogBottomMaximumValue = 0;
 
 // analog lowpass filter variables
-int buttonTopLowpass = 915;
-int buttonBottomLowpass = 915;
+int buttonTopLowpass = 0;
+int buttonBottomLowpass = 0;
 int lowpassParts = 2;
 int lowpassResponse = 1;
 
@@ -190,13 +194,15 @@ void loop() {
         buttonTopLowpass = (lowpassResponse * readValue +
                            (lowpassParts - lowpassResponse) * buttonTopLowpass)
                            / lowpassParts;
+        if (buttonTopLowpass > analogTopMaximumValue)
+            analogTopMaximumValue = buttonTopLowpass;
         if (buttonTopPinLast == LOW) {
-            if (buttonTopLowpass < analogThresholdLow) {
+            if (buttonTopLowpass < (analogTopMaximumValue + analogLowThresholdOffset)) {
                 buttonTopPinLast = HIGH;
                 event |= BUTTON_TOP_DOWN;
             }
         } else if (buttonTopPinLast == HIGH) {
-            if (buttonTopLowpass >= analogThresholdHigh) {
+            if (buttonTopLowpass >= (analogTopMaximumValue + analogHighThresholdOffset)) {
                 buttonTopPinLast = LOW;
                 event |= BUTTON_TOP_UP;
             }
@@ -228,13 +234,15 @@ void loop() {
         buttonBottomLowpass = (lowpassResponse * readValue +
                               (lowpassParts - lowpassResponse) * buttonBottomLowpass)
                               / lowpassParts;
+        if (buttonBottomLowpass > analogBottomMaximumValue)
+            analogBottomMaximumValue = buttonBottomLowpass;
         if (buttonBottomPinLast == LOW) {
-            if (buttonBottomLowpass < analogThresholdLow) {
+            if (buttonBottomLowpass < (analogBottomMaximumValue + analogLowThresholdOffset)) {
                 buttonBottomPinLast = HIGH;
                 event |= BUTTON_BOTTOM_DOWN;
             }
         } else if (buttonBottomPinLast == HIGH) {
-            if (buttonBottomLowpass >= analogThresholdHigh) {
+            if (buttonBottomLowpass >= (analogBottomMaximumValue + analogHighThresholdOffset)) {
                 buttonBottomPinLast = LOW;
                 event |= BUTTON_BOTTOM_UP;
             }

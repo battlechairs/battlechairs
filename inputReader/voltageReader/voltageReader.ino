@@ -1,30 +1,39 @@
-int readA0, readA1, readA2, readA3, readA4, readA5;
+int left = 0;
+int right = 0;
+
+int lpParts = 10;
+int lpResponse = 5;
+
+int leftMax = 0;
+int rightMax = 0;
+
+int highOffset = -75;
+int lowOffset = -100;
 
 void setup() {
   Serial.begin(9600);
 }
 
 void loop() {
-  readA0 = analogRead(A0);
-  readA1 = analogRead(A1);
-  readA2 = analogRead(A2);
-  readA3 = analogRead(A3);
-  readA4 = analogRead(A4);
-  readA5 = analogRead(A5);
+  left = (lpResponse * analogRead(0) + (lpParts - lpResponse) * left) / lpParts;
+  right = (lpResponse * analogRead(2) + (lpParts - lpResponse) * right) / lpParts;
 
-  Serial.print("[");
-  Serial.print(readA0);
-  Serial.print(",");
-  Serial.print(readA1);
-  Serial.print(",");
-  Serial.print(readA2);
-  Serial.print(",");
-  Serial.print(readA3);
-  Serial.print(",");
-  Serial.print(readA4);
-  Serial.print(",");
-  Serial.print(readA5);
-  Serial.print("]");
+  if (left > leftMax) leftMax = left;
+  if (right > rightMax) rightMax = right;
 
-  delay(2);
+  Serial.print(left);
+  Serial.print(",");
+  Serial.print(leftMax + highOffset);
+  Serial.print(",");
+  Serial.print(leftMax + lowOffset);
+  Serial.print(",");
+  Serial.print(right);
+  Serial.print(",");
+  Serial.print(rightMax + highOffset);
+  Serial.print(",");
+  Serial.print(rightMax + lowOffset);
+  Serial.print("\n");
+
+  delay(1);
 }
+
