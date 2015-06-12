@@ -145,7 +145,7 @@ void ABattleChairsCharacter::SetupPlayerInputComponent(class UInputComponent* In
 		LPCWSTR portName = portNameBuffer;
 
 		//Mitch: loop through a set of COM ports to try to find the arduino
-		for (int comIter = 1; comIter < COM_PORT_MAX; comIter++) {
+		for (int comIter = 3; comIter < COM_PORT_MAX; comIter++) {
 			swprintf(portNameBuffer, 13, L"\\\\.\\COM%d", comIter);
 
 			hSerial = CreateFile(portName, GENERIC_READ | GENERIC_WRITE,
